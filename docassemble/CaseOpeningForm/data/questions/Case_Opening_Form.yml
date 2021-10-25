@@ -113,6 +113,20 @@ fields:
     maxlength: 86
   - "Clinic Practice Area": Clinic_Practice_Area
     maxlength: 28
+    input type: radio
+    choices:
+      - Accelerator Practice: Accelerator Practice
+      - Family Advocacy Clinic: Family Advocacy Clinic
+      - Health Law Clinic: Health Law Clinic
+      - Immigration Clinic: Immigration Clinic
+      - Human Rights and Indigenous Peoples Clinic: Human Rights and Indigenous Peoples Clinic
+      - Innocence Clinic: Innocence Clinic
+      - Intellectual Property & Entrepreneurship Clinic: Intellectual Property & Entrepreneurship Clinic
+      - Juvenile Defenders Clinic: Juvenile Defenders Clinic
+      - Suffolk Defenders Program: Suffolk Defenders Program
+      - Suffolk Prosecutors Program: Suffolk Prosecutors Program
+      - Supreme Court Clinic: Supreme Court Clinic
+      - Transactional Clinic: Transactional Clinic
   - "Student Attorney Name(s)": Student_Atty_name
     maxlength: 86
 ---
