@@ -71,7 +71,9 @@ code: |
   user_role = 'na'
   Today_date
   Case_Description
-  client_birthdate
+  Client_Name
+  client_phone_number
+  Client_Company
   set_progress(25)
   opp_DateOfBirth
   Contact1_relation
@@ -197,18 +199,34 @@ fields:
     required: False
     show if: Knows_Court_Agency_Docket__number
 ---
-id: Client Information
+id: Client Basic Information
 question: |
-  Client Information
+  Client Basic Information
 fields:
   - "Client name": Client_Name
     maxlength: 80
-  - "Client notes": Client_Notes
+  - "Notes about Client": Client_Notes
     input type: area
     maxlength: 360
     required: False
   - note: |
-      Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.
+      **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**
+  - "Client title": Knows_Client_title
+    datatype: yesno
+  - "Client title": Client_title
+    maxlength: 40
+    required: False
+    show if: Knows_Client_title
+    input type: dropdown
+    choices:
+      - Mr.: Mr.
+      - Mrs.: Mrs.
+      - Ms.: Ms.
+      - Other: Other
+  - "Other title": Client_title
+    show if:
+      variable: Client_title
+      is: Other
   - "Client birthdate.": Knows_client_birthdate
     datatype: yesno
   - "Client birthdate": client_birthdate
@@ -222,18 +240,12 @@ fields:
     maxlength: 33
     required: False
     show if: Knows_Client_genders
-  - "Client company": Knows_Client_Company
+  - "Client race": Knows_Client_Race
     datatype: yesno
-  - "Client company": Client_Company
-    maxlength: 50
-    required: False
-    show if: Knows_Client_Company
-  - "Client title": Knows_Client_title
-    datatype: yesno
-  - "Client title": Client_title
-    maxlength: 40
-    required: False
-    show if: Knows_Client_title
+  - "Client race": Client_Race
+    maxlength: 100
+    required: False 
+    show if: Knows_Client_Race
   - "Client marital status": Knows_Client_MaritalStatus
     datatype: yesno
   - "Client marital status": Client_MaritalStatus
@@ -246,27 +258,14 @@ fields:
     maxlength: 80
     required: False
     show if: Knows_Client_Aliases
-  - "Client Address.": Knows_client_address
-    datatype: yesno
-  - "Client street address": Client_address_street
-    maxlength: 80
-    required: False
-    show if: Knows_client_address
-  - "Client address city": Client_address_city
-    maxlength: 48
-    required: False
-    show if: Knows_client_address
-  - "Client address zip": Client_address_zip
-    maxlength: 24
-    required: False 
-    show if: Knows_client_address
-  - "Client's Public Housing status": Knows_Client_Public_Housing
-    datatype: yesno
-  - "Client's Public Housing status": Client_Public_Housing
-    maxlength: 12
-    required: False
-    show if: Knows_Client_Public_Housing
-  - "Client Phone Number": Knows_client_phone_number
+---
+id: Client Contact Information
+question: |
+  Client Contact Information
+fields:
+  - note: |
+      **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**
+  - "Client phone number": Knows_client_phone_number
     datatype: yesno
   - "Client phone number": client_phone_number
     maxlength: 42
@@ -282,7 +281,7 @@ fields:
   - "Any other phone numbers?": Knows_client_other2_number
     datatype: yesno
     show if: Knows_client_other1_number
-  - "Client other alternative number": client_other2_number
+  - "Other phone number": client_other2_number
     maxlength: 100
     required: False
     show if: Knows_client_other2_number
@@ -292,30 +291,35 @@ fields:
     maxlength: 138
     required: False   
     show if: Knows_Client_email
-  - "Client interpreter": Knows_Client_Interpreter
+  - "Client address.": Knows_client_address
     datatype: yesno
-  - "Client interpreter": Client_Interpreter
-    maxlength: 17
-    required: False 
-    show if: Knows_Client_Interpreter
-  - "Client primary languages": Knows_Client_Primary_Languages
-    datatype: yesno
-  - "Client primary languages": Client_Primary_Languages
-    maxlength: 38
-    required: False 
-    show if: Knows_Client_Primary_Languages
-  - "Client race": Knows_Client_Race
-    datatype: yesno
-  - "Client race": Client_Race
-    maxlength: 100
-    required: False 
-    show if: Knows_Client_Race
-  - "Client immigration status": Knows_Client_Imm_Status
-    datatype: yesno
-  - "Client immigration status": Client_Imm_Status
-    maxlength: 21
+  - "Client street address": Client_address_street
+    maxlength: 80
     required: False
-    show if: Knows_Client_Imm_Status
+    show if: Knows_client_address
+  - "Client address city": Client_address_city
+    maxlength: 48
+    required: False
+    show if: Knows_client_address
+  - "Client address zip": Client_address_zip
+    maxlength: 24
+    required: False 
+    show if: Knows_client_address
+---
+id: Client Background Information
+question: |
+  Client Background Information
+fields:
+  - note: |
+      **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**
+  - note: |
+      *Income Information*
+  - "Client company": Knows_Client_Company
+    datatype: yesno
+  - "Client company": Client_Company
+    maxlength: 50
+    required: False
+    show if: Knows_Client_Company 
   - "Client Income information": Knows_Client_Income
     datatype: yesno
   - "Client source of income": Client_Source_Income
@@ -338,61 +342,129 @@ fields:
     maxlength: 78
     required: False
     show if: Knows_Client_Number_Household
+  - "Client's Public Housing status": Knows_Client_Public_Housing
+    datatype: yesno
+  - "Client's Public Housing status": Client_Public_Housing
+    maxlength: 12
+    required: False
+    show if: Knows_Client_Public_Housing
+  - note: |
+      *Language and Immigration Information*
+  - "Client primary languages": Client_Primary_Languages
+    maxlength: 38
+    required: False 
+    show if: Knows_Client_Primary_Languages
+  - "Client interpreter": Knows_Client_Interpreter
+    datatype: yesno
+  - "Client interpreter": Client_Interpreter
+    maxlength: 17
+    required: False 
+    show if: Knows_Client_Interpreter
+  - "Client primary languages": Knows_Client_Primary_Languages
+    datatype: yesno
+  - "Client immigration status": Knows_Client_Imm_Status
+    datatype: yesno
+  - "Client immigration status": Client_Imm_Status
+    maxlength: 21
+    required: False
+    show if: Knows_Client_Imm_Status
 ---
 id: Opposition Information
 question: |
   Opposition Information
 fields:
-  - "Opposition date of birth": opp_DateOfBirth
-    maxlength: 11
-    required: False
   - "Opposition name": opp_name
     maxlength: 80
     required: False
-  - "Opposition gender": opp_GenderExpression
-    maxlength: 66
-    required: False
-  - "Opposition title": opp_title
-    maxlength: 80
-    required: False
-  - "Opposition company": opp_company
-    maxlength: 100
-    required: False
-  - "Opposition aliases": opp_Aliases_names
-    input type: area
-    maxlength: 180
-    required: False
-  - "Opposition address city": opp_address_city
-    maxlength: 48
-    required: False
-  - "Opposition address zip": opp_address_zip
-    maxlength: 50
-    required: False
-  - "Opposition address street": opp_address_street
-    maxlength: 80
-    required: False
-  - "Opposition alternative number": opp_alt1_number
-    maxlength: 38
-    required: False
-  - "Opposition other alternative number": opp_alt2_number
-    maxlength: 50
-    required: False
-  - "Opposition phone number": opp_phone_number
-    maxlength: 42
-    required: False
-  - "Opposition interpreter": Opp_Interpreter
-    maxlength: 12
-    required: False
-  - "Opposition primarylanguages": opp_PrimaryLanguages
-    maxlength: 38
-    required: False
-  - "Opposition email": opp_email
-    maxlength: 100
-    required: False
-  - "Opposition notes": opp_Notes
+  - "Notes about Opposition": opp_Notes
     input type: area
     maxlength: 270
     required: False
+  - note: |
+      **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**  
+  - "Opposition date of birth": Knows_opp_DateOfBirth
+    datatype: yesno
+  - "Opposition date of birth": opp_DateOfBirth
+    maxlength: 11
+    required: False
+    show if: Knows_opp_DateOfBirth
+  - "Opposition gender": Knows_opp_GenderExpression
+    datatype: yesno
+  - "Opposition gender": opp_GenderExpression
+    maxlength: 66
+    required: False
+    show if: Knows_opp_GenderExpression
+  - "Opposition title": Knows_opp_title
+    datatype: yesno
+  - "Opposition title": opp_title
+    maxlength: 80
+    required: False
+    show if: Knows_opp_title
+  - "Opposition company": Knows_opp_company
+    datatype: yesno
+  - "Opposition company": opp_company
+    maxlength: 100
+    required: False
+    show if: Knows_opp_company
+  - "Opposition aliases or other names": Knows_opp_Aliases_names
+    datatype: yesno
+  - "Opposition aliases or other names": opp_Aliases_names
+    input type: area
+    maxlength: 180
+    required: False
+    show if: Knows_opp_Aliases_names
+  - "Street Address": Knows_opp_address_city
+    datatype: yesno
+  - "Opposition address street": opp_address_street
+    maxlength: 80
+    required: False
+    show if: Knows_opp_address_city
+  - "Opposition address city": opp_address_city
+    maxlength: 48
+    required: False
+    show if: Knows_opp_address_city
+  - "Opposition address zip": opp_address_zip
+    maxlength: 50
+    required: False
+    show if: Knows_opp_address_city
+  - "Opposition phone number": Knows_opp_phone_number
+    datatype: yesno
+  - "Opposition phone number": opp_phone_number
+    maxlength: 42
+    required: False
+    show if: Knows_opp_phone_number
+  - "Any other phone numbers?": Knows_opp_alt1_number
+    datatype: yesno
+    show if: Knows_opp_phone_number
+  - "Alternative number": opp_alt1_number
+    maxlength: 38
+    required: False
+    show if: Knows_opp_alt1_number
+  - "Any other phone numbers?": Knows_opp_alt2_number
+    datatype: yesno
+    show if: Knows_opp_alt1_number
+  - "Alternative number": opp_alt2_number
+    maxlength: 50
+    required: False
+    show if: Knows_opp_alt2_number
+  - "Opposition interpreter": Knows_Opp_Interpreter
+    datatype: yesno
+  - "Opposition interpreter": Opp_Interpreter
+    maxlength: 12
+    required: False
+    show if: Knows_Opp_Interpreter
+  - "Opposition primarylanguages": Knows_PrimaryLanguages
+    datatype: yesno
+  - "Opposition primarylanguages": opp_PrimaryLanguages
+    maxlength: 38
+    required: False
+    show if: Knows_PrimaryLanguages
+  - "Opposition email": Knows_opp_email
+    datatype: yesno
+  - "Opposition email": opp_email
+    maxlength: 100
+    required: False
+    show if: Knows_opp_email
 ---
 id: Contacts
 question: |
