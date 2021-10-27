@@ -107,9 +107,8 @@ id: Background Information
 question: |
   Background Information
 fields:
-  - "Today's Date": Today_date
-    datatype: date
-    default: ${ today().format("yyyy-MM-dd") }
+  - "Student Attorney Name(s)": Student_Atty_name
+    maxlength: 86
   - "Supervisor Name": Supervisor_name
     maxlength: 86
     input type: dropdown
@@ -151,8 +150,9 @@ fields:
       - Suffolk Prosecutors Program: Suffolk Prosecutors Program
       - Supreme Court Clinic: Supreme Court Clinic
       - Transactional Clinic: Transactional Clinic
-  - "Student Attorney Name(s)": Student_Atty_name
-    maxlength: 86
+  - "Today's Date": Today_date
+    datatype: date
+    default: ${ today().format("yyyy-MM-dd") }
 ---
 id: Case Information
 question: |
@@ -176,19 +176,21 @@ fields:
     maxlength: 96
     required: False
     hint: e.g., Full, Bail only, etc.
-  - "Check this box if you know who the assigned Judge is.": Knows_Judge
+  - note: |
+      Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.
+  - "Assigned Judge": Knows_Judge
     datatype: yesno
   - "Judge name": Judge_name
     maxlength: 48
     required: False
     show if: Knows_Judge
-  - "Check this box if you know who the Court or Agency name.": Knows_Court_Agency
+  - "Court or Agency name.": Knows_Court_Agency
     datatype: yesno
   - "Court or Agency name": Court_Agency
     maxlength: 42
     required: False
     show if: Knows_Court_Agency
-  - "Check this box if you know who the Court or Agency docket number.": Knows_Court_Agency_Docket__number
+  - "Court or Agency docket number.": Knows_Court_Agency_Docket__number
     datatype: yesno
   - "Court or Agency docket  number": Court_Agency_Docket__number
     maxlength: 96
@@ -199,78 +201,143 @@ id: Client Information
 question: |
   Client Information
 fields:
-  - "Client birthdate": client_birthdate
-    maxlength: 12
-    required: False
-  - "Client gender": Client_gender
-    maxlength: 33
-    required: False
   - "Client name": Client_Name
     maxlength: 80
-  - "Client company": Client_Company
-    maxlength: 50
-    required: False
-  - "Client title": Client_title
-    maxlength: 40
-    required: False
-  - "Client marital status": Client_MaritalStatus
-    maxlength: 98
-    required: False
-  - "Client aliases": Client_Aliases
-    maxlength: 80
-    required: False
-  - "Client address street": Client_address_street
-    maxlength: 80
-    required: False
-  - "Client address city": Client_address_city
-    maxlength: 48
-    required: False
-  - "public housing status": Client_Public_Housing
-    maxlength: 12
-    required: False
-  - "Client address zip": Client_address_zip
-    maxlength: 24
-    required: False
-  - "Client phone number": client_phone_number
-    maxlength: 42
-    required: False
-  - "Client alternative number": client_other1_number
-    maxlength: 38
-    required: False
-  - "Client other alternative number": client_other2_number
-    maxlength: 100
-    required: False
-  - "Client interpreter": Client_Interpreter
-    maxlength: 17
-    required: False
-  - "Client primary languages": Client_Primary_Languages
-    maxlength: 38
-    required: False
-  - "Client race": Client_Race
-    maxlength: 100
-    required: False
-  - "Client immigration status": Client_Imm_Status
-    maxlength: 21
-    required: False
-  - "Client email": Client_email
-    maxlength: 138
-    required: False
-  - "Client income": Client_Income
-    maxlength: 40
-    required: False
-  - "Client source of income": Client_Source_Income
-    maxlength: 100
-    required: False
-  - "Client number of dependents": Client_NumberOfDependents
-    maxlength: 96
-    required: False
-  - "Client number household": Client_Number_Household
-    maxlength: 78
-    required: False
   - "Client notes": Client_Notes
     input type: area
     maxlength: 360
     required: False
+  - note: |
+      Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.
+  - "Client birthdate.": Knows_client_birthdate
+    datatype: yesno
+  - "Client birthdate": client_birthdate
+    datatype: date
+    maxlength: 12
+    required: False
+    show if: Knows_client_birthdate
+  - "Client gender": Knows_Client_gender
+    datatype: yesno
+  - "Client gender": Client_gender
+    maxlength: 33
+    required: False
+    show if: Knows_Client_gender
+  - "Client company": Knows_Client_Company
+    datatype: yesno
+  - "Client company": Client_Company
+    maxlength: 50
+    required: False
+    show if: Knows_Client_Company
+  - "Client title": Knows_Client_title
+    datatype: yesno
+  - "Client title": Client_title
+    maxlength: 40
+    required: False
+    show if: Knows_Client_title
+  - "Client marital status": Knows_Client_MaritalStatus
+    datatype: yesno
+  - "Client marital status": Client_MaritalStatus
+    maxlength: 98
+    required: False
+    show if: Knows_Client_MaritalStatus
+  - "Client aliases or other names": Knows_Client_Aliases
+    datatype: yesno
+  - "Client aliases or other names": Client_Aliases
+    maxlength: 80
+    required: False
+    show if: Knows_Client_Aliases
+  - "Client Address.": Knows_client_address
+    datatype: yesno
+  - "Client street address": Client_address_street
+    maxlength: 80
+    required: False
+    show if: Knows_client_address
+  - "Client address city": Client_address_city
+    maxlength: 48
+    required: False
+    show if: Knows_client_address
+  - "Client address zip": Client_address_zip
+    maxlength: 24
+    required: False 
+    show if: Knows_client_address
+  - "Client's Public Housing status": Knows_Client_Public_Housing
+    datatype: yesno
+  - "Client's Public Housing status": Client_Public_Housing
+    maxlength: 12
+    required: False
+    show if: Knows_Client_Public_Housing
+  - "Client Phone Number": Knows_client_phone_number
+    datatype: yesno
+  - "Client phone number": client_phone_number
+    maxlength: 42
+    required: False
+    show if: Knows_client_phone_number
+  - "Any other phone numbers?": Knows_client_other1_number
+    datatype: yesno
+    show if: Knows_client_phone_number
+  - "Other phone number": client_other1_number
+    maxlength: 38
+    required: False  
+    show if: Knows_client_other1_number
+  - "Any other phone numbers?": Knows_client_other2_number
+    datatype: yesno
+    show if: Knows_client_other1_number
+  - "Client other alternative number": client_other2_number
+    maxlength: 100
+    required: False
+    show if: Knows_client_other2_number
+  - "Client email": Knows_Client_email
+    datatype: yesno
+  - "Client email": Client_email
+    maxlength: 138
+    required: False   
+    show if: Knows_Client_email
+  - "Client interpreter": Knows_Client_Interpreter
+    datatype: yesno
+  - "Client interpreter": Client_Interpreter
+    maxlength: 17
+    required: False 
+    show if: Knows_Client_Interpreter
+  - "Client primary languages": Knows_Client_Primary_Languages
+    datatype: yesno
+  - "Client primary languages": Client_Primary_Languages
+    maxlength: 38
+    required: False 
+    show if: Knows_Client_Primary_Languages
+  - "Client race": Knows_Client_Race
+    datatype: yesno
+  - "Client race": Client_Race
+    maxlength: 100
+    required: False 
+    show if: Knows_Client_Race
+  - "Client immigration status": Knows_Client_Imm_Status
+    datatype: yesno
+  - "Client immigration status": Client_Imm_Status
+    maxlength: 21
+    required: False
+    show if: Knows_Client_Imm_Status
+  - "Client Income information": Knows_Client_Income
+    datatype: yesno
+  - "Client source of income": Client_Source_Income
+    maxlength: 100
+    required: False
+    show if: Knows_Client_Income
+  - "Client income": Client_Income
+    maxlength: 40
+    required: False
+    show if: Knows_Client_Income
+  - "Client number of dependents": Knows_Client_NumberOfDependents
+    datatype: yesno   
+  - "Client number of dependents": Client_NumberOfDependents
+    maxlength: 96
+    required: False
+    show if: Knows_Client_NumberOfDependents
+  - "Client number household": Knows_Client_Number_Household
+    datatype: yesno   
+  - "Client number household": Client_Number_Household
+    maxlength: 78
+    required: False
+    show if: Knows_Client_Number_Household
 ---
 id: Opposition Information
 question: |
