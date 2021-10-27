@@ -216,12 +216,12 @@ fields:
     maxlength: 12
     required: False
     show if: Knows_client_birthdate
-  - "Client gender": Knows_Client_gender
+  - "Client gender": Knows_Client_genders
     datatype: yesno
   - "Client gender": Client_gender
     maxlength: 33
     required: False
-    show if: Knows_Client_gender
+    show if: Knows_Client_genders
   - "Client company": Knows_Client_Company
     datatype: yesno
   - "Client company": Client_Company
