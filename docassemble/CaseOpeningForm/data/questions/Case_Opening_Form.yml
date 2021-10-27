@@ -87,7 +87,7 @@ code: |
   al_intro_screen
   Case_Opening_Form_intro
   interview_order_Case_Opening_Form
-  # signature_date
+  signature_date
   # Save anonymized interview statistics (customize the saved data below)
   store_variables_snapshot(data={'zip': users[0].address.zip})
   Case_Opening_Form_preview_question
