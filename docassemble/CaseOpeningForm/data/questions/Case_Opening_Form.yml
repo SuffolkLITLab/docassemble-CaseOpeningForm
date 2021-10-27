@@ -87,7 +87,7 @@ code: |
   al_intro_screen
   Case_Opening_Form_intro
   interview_order_Case_Opening_Form
-  signature_date
+  # signature_date
   # Save anonymized interview statistics (customize the saved data below)
   store_variables_snapshot(data={'zip': users[0].address.zip})
   Case_Opening_Form_preview_question
@@ -111,9 +111,32 @@ fields:
     datatype: date
   - "Supervisor Name": Supervisor_name
     maxlength: 86
+    input type: dropdown
+    choices:
+      - William Berman: William Berman
+      - Ilene Seidman: Ilene Seidman
+      - James Matthews: James Matthews
+      - Maritza Karmely: Maritza Karmely
+      - Chris Butler: Chris Butler
+      - Sarah Boonin: Sarah Boonin
+      - Ragini Shah: Ragini Shah
+      - Nicole Friederichs: Nicole Friederichs
+      - Shira Diner: Shira Diner
+      - Kim McLaurin: Kim McLaurin
+      - Loletta Darden: Loletta Darden
+      - Vanessa Hernandez: Vanessa Hernandez
+      - Chris Dearborn: Chris Dearborn
+      - Christina Miller: Christina Miller
+      - Jeffrey Pokorak: Jeffrey Pokorak
+      - Ragini Shah: Ragini Shah
+      - Other: Other
+  - "Other Supervisor": Supervisor_name
+    show if:
+      variable: Supervisor_name
+      is: Other
   - "Clinic Practice Area": Clinic_Practice_Area
     maxlength: 28
-    input type: radio
+    input type: dropdown
     choices:
       - Accelerator Practice: Accelerator Practice
       - Family Advocacy Clinic: Family Advocacy Clinic
@@ -136,21 +159,15 @@ question: |
 fields:
   - "Case description": Case_Description
     maxlength: 42
-  - "Judge name": Judge_name
-    maxlength: 48
-    required: False
-  - "Court or Agency name": Court_Agency
-    maxlength: 42
-    required: False
-  - "Court or Agency docket  number": Court_Agency_Docket__number
-    maxlength: 96
-    required: False
+    hint: e.g., Representing defendant in drug court.
   - "Referral source": Referral_Source
     maxlength: 84
     required: False
+    hint: e.g., Duty Day, Word of Mouth, etc.
   - "Scope of representation": Scope_Of_Representation
     maxlength: 96
     required: False
+    hint: e.g., Full, Bail only, etc.
   - "Case type": Case_Type
     maxlength: 90
     required: False
@@ -158,6 +175,24 @@ fields:
     input type: area
     maxlength: 910
     required: False
+  - "Check this box if you know who the assigned Judge is.": Knows_Judge
+    datatype: yesno
+  - "Judge name": Judge_name
+    maxlength: 48
+    required: False
+    show if: Knows_Judge
+  - "Check this box if you know who the Court or Agency name.": Knows_Court_Agency
+    datatype: yesno
+  - "Court or Agency name": Court_Agency
+    maxlength: 42
+    required: False
+    show if: Knows_Court_Agency
+  - "Check this box if you know who the Court or Agency docket number.": Knows_Court_Agency_Docket__number
+    datatype: yesno
+  - "Court or Agency docket  number": Court_Agency_Docket__number
+    maxlength: 96
+    required: False
+    show if: Knows_Court_Agency_Docket__number
 ---
 id: Client Information
 question: |
