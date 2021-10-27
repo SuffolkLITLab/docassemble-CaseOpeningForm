@@ -107,8 +107,9 @@ id: Background Information
 question: |
   Background Information
 fields:
-  - "Date of Today": Today_date
+  - "Today's Date": Today_date
     datatype: date
+    default: ${ today().format("yyyy-MM-dd") }
   - "Supervisor Name": Supervisor_name
     maxlength: 86
     input type: dropdown
@@ -160,6 +161,13 @@ fields:
   - "Case description": Case_Description
     maxlength: 42
     hint: e.g., Representing defendant in drug court.
+  - "Case type": Case_Type
+    maxlength: 90
+    required: False
+  - "Case  synopsis": Case__synopsis
+    input type: area
+    maxlength: 910
+    required: False
   - "Referral source": Referral_Source
     maxlength: 84
     required: False
@@ -168,13 +176,6 @@ fields:
     maxlength: 96
     required: False
     hint: e.g., Full, Bail only, etc.
-  - "Case type": Case_Type
-    maxlength: 90
-    required: False
-  - "Case  synopsis": Case__synopsis
-    input type: area
-    maxlength: 910
-    required: False
   - "Check this box if you know who the assigned Judge is.": Knows_Judge
     datatype: yesno
   - "Judge name": Judge_name
