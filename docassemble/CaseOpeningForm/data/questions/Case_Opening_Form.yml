@@ -382,30 +382,42 @@ fields:
     required: False
   - note: |
       **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**  
-  - "Opposition date of birth": Knows_opp_DateOfBirth
-    datatype: yesno
-  - "Opposition date of birth": opp_DateOfBirth
-    maxlength: 11
-    required: False
-    show if: Knows_opp_DateOfBirth
-  - "Opposition gender": Knows_opp_GenderExpression
-    datatype: yesno
-  - "Opposition gender": opp_GenderExpression
-    maxlength: 66
-    required: False
-    show if: Knows_opp_GenderExpression
+  - note: |
+      *Background Information*
   - "Opposition title": Knows_opp_title
     datatype: yesno
   - "Opposition title": opp_title
     maxlength: 80
     required: False
     show if: Knows_opp_title
+    input type: dropdown
+    choices:
+      - Mr.: Mr.
+      - Mrs.: Mrs.
+      - Ms.: Ms.
+      - Other: Other
+  - "Other title": opp_title
+    show if:
+      variable: opp_title
+      is: Other
+  - "Opposition gender": Knows_opp_GenderExpression
+    datatype: yesno
+  - "Opposition gender": opp_GenderExpression
+    maxlength: 66
+    required: False
+    show if: Knows_opp_GenderExpression
   - "Opposition company": Knows_opp_company
     datatype: yesno
   - "Opposition company": opp_company
     maxlength: 100
     required: False
     show if: Knows_opp_company
+  - "Opposition date of birth": Knows_opp_DateOfBirth
+    datatype: yesno
+  - "Opposition date of birth": opp_DateOfBirth
+    maxlength: 11
+    required: False
+    show if: Knows_opp_DateOfBirth
   - "Opposition aliases or other names": Knows_opp_Aliases_names
     datatype: yesno
   - "Opposition aliases or other names": opp_Aliases_names
@@ -413,6 +425,8 @@ fields:
     maxlength: 180
     required: False
     show if: Knows_opp_Aliases_names
+  - note: |
+      *Contact Information*
   - "Street Address": Knows_opp_address_city
     datatype: yesno
   - "Opposition address street": opp_address_street
@@ -447,6 +461,8 @@ fields:
     maxlength: 50
     required: False
     show if: Knows_opp_alt2_number
+  - note: |
+      *Language and Immigration Information*
   - "Opposition interpreter": Knows_Opp_Interpreter
     datatype: yesno
   - "Opposition interpreter": Opp_Interpreter
