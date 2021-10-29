@@ -72,10 +72,11 @@ code: |
   Today_date
   Case_Description
   Client_Name
-  client_phone_number
-  Client_Company
+  Knows_client_phone_number
+  Knows_Client_Company
   set_progress(25)
   opp_DateOfBirth
+  opp_address_city
   Contact1_relation
   ConflictCheckResultsAttached
   interview_order_Case_Opening_Form = True
@@ -425,8 +426,13 @@ fields:
     maxlength: 180
     required: False
     show if: Knows_opp_Aliases_names
+---
+id: Opposition Contact Information
+question: |
+  Opposition Contact Information
+fields:
   - note: |
-      *Contact Information*
+      **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**
   - "Street Address": Knows_opp_address_city
     datatype: yesno
   - "Opposition address street": opp_address_street
@@ -441,6 +447,12 @@ fields:
     maxlength: 50
     required: False
     show if: Knows_opp_address_city
+  - "Opposition email": Knows_opp_email
+    datatype: yesno
+  - "Opposition email": opp_email
+    maxlength: 100
+    required: False
+    show if: Knows_opp_email
   - "Opposition phone number": Knows_opp_phone_number
     datatype: yesno
   - "Opposition phone number": opp_phone_number
@@ -475,12 +487,6 @@ fields:
     maxlength: 38
     required: False
     show if: Knows_PrimaryLanguages
-  - "Opposition email": Knows_opp_email
-    datatype: yesno
-  - "Opposition email": opp_email
-    maxlength: 100
-    required: False
-    show if: Knows_opp_email
 ---
 id: Contacts
 question: |
