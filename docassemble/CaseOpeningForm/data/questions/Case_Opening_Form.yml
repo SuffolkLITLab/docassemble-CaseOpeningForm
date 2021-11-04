@@ -56,6 +56,10 @@ code: |
 ---
 objects:
   - users: ALPeopleList.using(there_are_any=True)
+  - studentattorney: ALPeopleList.using(there_are_any=True, ask_number=True)
+  - client: ALPeopleList.using(target_number=1,ask_number=True)
+  - parent: ALPeopleList.using(target_number=1,ask_number=True)
+  - contact: ALPeopleList.using(object_type=Individual, there_is_another=True, complete_attribute='complete') 
 ---
 sections:
   - review_Case_Opening_Form: Review your answers
@@ -69,15 +73,21 @@ code: |
   allowed_courts = interview_metadata["Case_Opening_Form"]["allowed courts"]
   nav.set_section('review_Case_Opening_Form')
   user_role = 'na'
-  Today_date
+  contact.there_are_any
+  contact.gather()
+  studentattorney.target_number
+  studentattorney.gather()
+  Clinic_Practice_Area
   Case_Description
-  Client_Name
-  Knows_client_phone_number
-  Knows_Client_Company
+  client.gather()
+  client[0].mobile_number
+  client[0].mailing_address.address
+  client_optional_info
   set_progress(25)
   opp_name
   Knows_opp_address_city
-  add_contact1
+  contact.there_are_any
+  contact.gather()
   ConflictCheckComplete
   interview_order_Case_Opening_Form = True
 ---
@@ -106,12 +116,28 @@ question: |
 subquestion: |
   Case Opening Form for Clinical Programs at Suffolk University Law School
 ---
-id: Background Information
 question: |
-  Background Information
+  How many student attorneys are assigned to this case?
 fields:
-  - "Student Attorney Name(s)": Student_Atty_name
-    maxlength: 86
+  - Number: studentattorney.target_number
+    datatype: integer
+    min: 1
+---
+id: Background Information
+sets:
+  - studentattorney[x].name.first
+  - studentattorney[x].name.last
+  - studentattorney[x].email
+question: |
+  What is the ${ ordinal(x) } student attorney name?
+fields:
+  - code: |
+      studentattorney[x].name_fields()
+---
+id: clinic information 
+question: |
+  Clinic information
+fields: 
   - "Supervisor Name": Supervisor_name
     maxlength: 86
     input type: dropdown
@@ -153,9 +179,6 @@ fields:
       - Suffolk Prosecutors Program: Suffolk Prosecutors Program
       - Supreme Court Clinic: Supreme Court Clinic
       - Transactional Clinic: Transactional Clinic
-  - "Today's Date": Today_date
-    datatype: date
-    default: ${ today().format("yyyy-MM-dd") }
 ---
 id: Case Information
 question: |
@@ -174,7 +197,7 @@ fields:
   - "Referral source": Referral_Source
     maxlength: 84
     required: False
-    hint: e.g., Duty Day, Word of Mouth, etc.
+    hint: e.g., Duty day, Word of mouth, etc.
   - "Scope of representation": Scope_Of_Representation
     maxlength: 96
     required: False
@@ -201,111 +224,100 @@ fields:
     show if: Knows_Court_Agency_Docket__number
 ---
 id: Client Basic Information
+generic object: ALPeopleList
+sets:
+  - client[0].name.first
+  - client[0].name.last
 question: |
-  Client Basic Information
+  What is your client's name?
 fields:
-  - "Client name": Client_Name
-    maxlength: 80
-  - "Notes about Client": Client_Notes
-    input type: area
-    maxlength: 360
+  - "Title": Client_title
     required: False
-  - note: |
-      **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**
-  - "Client title": Knows_Client_title
-    datatype: yesno
-  - "Client title": Client_title
-    maxlength: 40
-    required: False
-    show if: Knows_Client_title
     input type: dropdown
     choices:
       - Mr.: Mr.
       - Mrs.: Mrs.
       - Ms.: Ms.
-      - Other: Other
-  - "Other title": Client_title
-    show if:
-      variable: Client_title
-      is: Other
-  - "Client birthdate.": Knows_client_birthdate
-    datatype: yesno
+      - Mx.: Mx.
+  - code: |
+      client[0].name_fields()
+  - "Notes about Client": Client_Notes
+    input type: area
+    maxlength: 360
+    required: False
+---
+id: additional client info
+question: | 
+  Optional questions about your client
+subquestion: |
+  If the information is unknown or not applicable that is okay.
+fields: 
   - "Client birthdate": client_birthdate
     datatype: date
     maxlength: 12
     required: False
-    show if: Knows_client_birthdate
-  - "Client gender": Knows_Client_genders
-    datatype: yesno
   - "Client gender": Client_gender
     maxlength: 33
     required: False
-    show if: Knows_Client_genders
-  - "Client race": Knows_Client_Race
-    datatype: yesno
   - "Client race": Client_Race
     maxlength: 100
     required: False 
-    show if: Knows_Client_Race
-  - "Client marital status": Knows_Client_MaritalStatus
-    datatype: yesno
   - "Client marital status": Client_MaritalStatus
     maxlength: 98
     required: False
-    show if: Knows_Client_MaritalStatus
-  - "Client aliases or other names": Knows_Client_Aliases
-    datatype: yesno
   - "Client aliases or other names": Client_Aliases
     maxlength: 80
     required: False
-    show if: Knows_Client_Aliases
+continue button field: client_optional_info
 ---
 id: Client Contact Information
 question: |
-  Client Contact Information
+  Client's contact information
+fields:  
+  - Mobile number: client[0].mobile_number
+    required: False
+  - Other phone number: client[0].phone_number
+    required: False
+  - Email address: client[0].email    
+    datatype: email
+    required: False
+  - Other ways to reach your client: client[0].other_contact_method
+    input type: area
+    required: False
+    help: |
+      If you do not have a phone number or email, provide
+      specific contact instructions.
+validation code: |
+  if (not showifdef('client[0].phone_number') and \
+      (not showifdef('client[0].mobile_number')) and \
+      (not showifdef('client[0].email')) and \
+      (not showifdef('client[0].other_contact_method'))):
+    validation_error(word("You need to provide at least one contact method."), field="client[0].other_contact_method")
+---
+generic object: ALIndividual
+id: client mailing address
+sets:
+  - client[0].mailing_address.address
+  - client[0].mailing_address.city
+  - client[0].mailing_address.zip
+question: |
+  What is ${client[0].name.first}'s address?
 fields:
-  - note: |
-      **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**
-  - "Client phone number": Knows_client_phone_number
-    datatype: yesno
-  - "Client phone number": client_phone_number
-    maxlength: 42
-    required: False
-    show if: Knows_client_phone_number
-  - "Any other phone numbers?": Knows_client_other1_number
-    datatype: yesno
-    show if: Knows_client_phone_number
-  - "Other phone number": client_other1_number
-    maxlength: 38
-    required: False  
-    show if: Knows_client_other1_number
-  - "Any other phone numbers?": Knows_client_other2_number
-    datatype: yesno
-    show if: Knows_client_other1_number
-  - "Other phone number": client_other2_number
-    maxlength: 100
-    required: False
-    show if: Knows_client_other2_number
-  - "Client email": Knows_Client_email
-    datatype: yesno
-  - "Client email": Client_email
-    maxlength: 138
-    required: False   
-    show if: Knows_Client_email
-  - "Client address.": Knows_client_address
-    datatype: yesno
-  - "Client street address": Client_address_street
-    maxlength: 80
-    required: False
-    show if: Knows_client_address
-  - "Client address city": Client_address_city
-    maxlength: 48
-    required: False
-    show if: Knows_client_address
-  - "Client address zip": Client_address_zip
-    maxlength: 24
-    required: False 
-    show if: Knows_client_address
+  - Address is public housing: Client_Public_Housing
+    datatype: yesnowide
+  - Client is homeless: unhoused_client
+    datatype: yesnowide
+    disable others: True
+  - code: |
+      client[0].mailing_address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
+---
+code: |
+if address_unknown:
+  client[0].address.address = ' '
+  client[0].address.unit = ' '
+  client[0].address.city = ' '
+  client[0].address.state = ' ' 
+  client[0].address.zip = ' '  
 ---
 id: Client Background Information
 question: |
@@ -343,12 +355,6 @@ fields:
     maxlength: 78
     required: False
     show if: Knows_Client_Number_Household
-  - "Client's Public Housing status": Knows_Client_Public_Housing
-    datatype: yesno
-  - "Client's Public Housing status": Client_Public_Housing
-    maxlength: 12
-    required: False
-    show if: Knows_Client_Public_Housing
   - note: |
       *Language and Immigration Information*
   - "Client primary languages": Client_Primary_Languages
@@ -487,179 +493,65 @@ fields:
     required: False
     show if: Knows_PrimaryLanguages
 ---
+id: any contacts
+question: |
+  Do you have any contacts to add? 
+yesno: contact.there_are_any
+---
+id: contacts gather
+code: |
+  contact[i].name.first
+  contact[i].name.last
+  contact[i].realtionship
+
+  contact[i].address.address
+  contact[i].mobile_number
+  contact[i].complete = True
+---
 id: Contacts
+  - contact[x].name.first
+  - contact[x].name.last
+generic object: ALIndividual
 question: |
   Contacts
+list collect: True
 fields:
-  - "Do you want to add another contact?": add_contact1
-    datatype: yesnoradio
-  - "Contact1 relation": Contact1_relation
+  - "Relationship to case": contact[i].realtionship
     maxlength: 50
-    required: False
-    show if: add_contact1
-  - "Contact1 name": Contact1_name
-    maxlength: 39
-    required: False
-    show if: add_contact1
+  - code: |
+      contact[x].name_fields()
+---
+id: contacts contact info
+generic object: ALIndividual
+question: | 
+  What is their contact information 
+fields: 
+  - code: |
+      client[0].mailing_address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
+
+
+
+
   - "Contact1 email": Contact1_email
     maxlength: 39
     required: False
-    show if: add_contact1
   - "Contact1 phone number": Contact1_phone_number
     maxlength: 50
     required: False
-    show if: add_contact1
   - "Contact1 address same": Contact1_Address_same
     datatype: yesno
-    show if: add_contact1
     required: False
   - "Contact1 address city": Contact1_address_city
     maxlength: 46
-    show if: add_contact1
     required: False
   - "Contact1 address state": Contact1_address_state
     maxlength: 28
-    show if: add_contact1
     required: False
   - "Contact1 address street": Contact1_address_street
     maxlength: 78
-    show if: add_contact1
     required: False
   - "Contact1 address zip": Contact1_address_zip
     maxlength: 24
-    show if: add_contact1
-    required: False
-  - "Do you want to add another contact?": add_contact2
-    datatype: yesnoradio
-    show if: add_contact1
-    required: False
-  - "Contact2 name": Contact2_name
-    maxlength: 39
-    show if: add_contact2
-    required: False
-  - "Contact2 relation": Contact2_relation
-    maxlength: 50
-    show if: add_contact2
-    required: False
-  - "Contact2 email": Contact2_email
-    maxlength: 39
-    show if: add_contact2
-    required: False
-  - "Contact2 phone number": Contact2_phone_number
-    maxlength: 30
-    show if: add_contact2
-    required: False
-  - "Contact2 other number": Contact2_other_number
-    maxlength: 18
-    show if: add_contact2
-    required: False
-  - "Contact2 address same": Contact2_Address_same
-    datatype: yesno
-    show if: add_contact2
-    required: False
-  - "Contact2 address street": Contact2_address_street
-    maxlength: 78
-    show if: add_contact2
-    required: False
-  - "Contact2 address city": Contact2_address_city
-    maxlength: 46
-    show if: add_contact2
-    required: False
-  - "Contact2 address state": Contact2_address_state
-    maxlength: 24
-    show if: add_contact2
-    required: False
-  - "Contact2 address zip": Contact2_address_zip
-    maxlength: 28
-    show if: add_contact2
-    required: False
-  - "Do you want to add another contact?": add_contact3
-    datatype: yesnoradio
-    show if: add_contact2
-    required: False
-  - "Contact3 name": Contact3_name
-    maxlength: 39
-    show if: add_contact3
-    required: False
-  - "Contact3 relation": Contact3_relation
-    maxlength: 50
-    show if: add_contact3
-    required: False
-  - "Contact3 email": Contact3_email
-    maxlength: 39
-    show if: add_contact3
-    required: False
-  - "Contact3 phone number": Contact3_phone_number
-    maxlength: 31
-    show if: add_contact3
-    required: False
-  - "Contact3 other number": Contact3_other_number
-    maxlength: 18
-    show if: add_contact3
-    required: False
-  - "Contact3 address same": Contact3_Address_same
-    datatype: yesno
-    show if: add_contact3
-    required: False
-  - "Contact3 address city": Contact3_address_city
-    maxlength: 44
-    show if: add_contact3
-    required: False
-  - "Contact3 address state": Contact3_address_state
-    maxlength: 24
-    show if: add_contact3
-    required: False
-  - "Contact3 address zip": Contact3_address_zip
-    maxlength: 28
-    show if: add_contact3
-    required: False
-  - "Contact3 address street": Contact3_address_street
-    maxlength: 78
-    show if: add_contact3
-    required: False
-  - "Do you want to add another contact?": add_contact4
-    datatype: yesnoradio
-    show if: add_contact3
-    required: False
-  - "Contact4 name": Contact4_name
-    maxlength: 39
-    show if: add_contact4
-    required: False
-  - "Contact4 relation": Contact4_relation
-    maxlength: 50
-    show if: add_contact4
-    required: False
-  - "Contact4 email": Contact4_email
-    maxlength: 39
-    show if: add_contact4
-    required: False
-  - "Contact4 phone number": Contact4_phone_number
-    maxlength: 31
-    show if: add_contact4
-    required: False
-  - "Contact4 other number": Contact4_other_number
-    maxlength: 18
-    show if: add_contact4
-    required: False
-  - "Contact4 address same": Contact4_Address_same
-    datatype: yesno
-    show if: add_contact4
-    required: False
-  - "Contact4 address state": Contact4_address_state
-    maxlength: 24
-    show if: add_contact4
-    required: False
-  - "Contact4 address street": Contact4_address_street
-    required: False
-    maxlength: 78
-    show if: add_contact4
-  - "Contact4 address city": Contact4_address_city
-    maxlength: 46
-    show if: add_contact4
-    required: False
-  - "Contact4 address zip": Contact4_address_zip
-    maxlength: 28
-    show if: add_contact4
     required: False
 ---
 id: Conflict Information
@@ -721,7 +613,7 @@ review:
   - Edit: Student_Atty_name
     button: |
       **Student Attorney Name(s)**:
-      ${ Student_Atty_name }
+      ${ studentattorney[0].name }
   - Edit: ConflictCheckResultsAttached
     button: |
       **Conflict check results attached**:
@@ -1125,10 +1017,10 @@ attachments:
     skip undefined: True
     pdf template file: Clinical_Programs_Case_Opening_Form_1.pdf
     fields:
-      - "Today_date": ${ Today_date }
+      - "Today_date": ${ today(format='MM/dd/YYYY') }
       - "Supervisor_name": ${ Supervisor_name }
       - "Clinic_Practice_Area": ${ Clinic_Practice_Area }
-      - "Student_Atty_name": ${ Student_Atty_name }
+      - "Student_Atty_name": ${ studentattorney[0].name }
       - "ConflictCheckResultsAttached": ${ ConflictCheckResultsAttached }
       - "ConflictCheckComplete": ${ ConflictCheckComplete }
       - "Date_ConflictCheck": ${ Date_ConflictCheck }
@@ -1143,18 +1035,21 @@ attachments:
       - "Case__synopsis": ${ Case__synopsis }
       - "client_birthdate": ${ client_birthdate }
       - "Client_gender": ${ Client_gender }
-      - "Client_Name": ${ Client_Name }
+      - "Client_Name": ${ client[0].name }
       - "Client_Company": ${ Client_Company }
       - "Client_title": ${ Client_title }
       - "Client_MaritalStatus": ${ Client_MaritalStatus }
       - "Client_Aliases": ${ Client_Aliases }
-      - "Client_address_street": ${ Client_address_street }
-      - "Client_address_city": ${ Client_address_city }
-      - "Client_Public_Housing": ${ Client_Public_Housing }
-      - "Client_address_zip": ${ Client_address_zip }
-      - "client_phone_number": ${ client_phone_number }
-      - "client_other1_number": ${ client_other1_number }
-      - "client_other2_number": ${ client_other2_number }
+      - "Client_address_street": ${ client[0].mailing_address.address }
+      - "Client_address_city": ${ client[0].mailing_address.city }
+      - "Client_address_zip": ${ client[0].mailing_address.zip }
+      - "Client_Public_Housing": | 
+          % if Client_Public_Housing == True:
+          ${ Client_Public_Housing }
+          % endif
+      - "client_phone_number": ${ client[0].mobile_number}
+      - "client_other1_number": ${ client[0].other_contact_method }
+      # "client_other2_number": ${ client_other2_number }
       - "Client_Interpreter": ${ Client_Interpreter }
       - "Client_Primary_Languages": ${ Client_Primary_Languages }
       - "Client_Race": ${ Client_Race }
