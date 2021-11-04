@@ -75,10 +75,10 @@ code: |
   Knows_client_phone_number
   Knows_Client_Company
   set_progress(25)
-  opp_DateOfBirth
-  opp_address_city
-  Contact1_relation
-  ConflictCheckResultsAttached
+  opp_name
+  Knows_opp_address_city
+  add_contact1
+  ConflictCheckComplete
   interview_order_Case_Opening_Form = True
 ---
 ###################### Main order ######################
@@ -376,7 +376,6 @@ question: |
 fields:
   - "Opposition name": opp_name
     maxlength: 80
-    required: False
   - "Notes about Opposition": opp_Notes
     input type: area
     maxlength: 270
