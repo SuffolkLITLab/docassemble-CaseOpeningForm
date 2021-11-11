@@ -59,7 +59,7 @@ objects:
   - studentattorney: ALPeopleList.using(there_are_any=True, ask_number=True)
   - client: ALPeopleList.using(target_number=1,ask_number=True)
   - parent: ALPeopleList.using(target_number=1,ask_number=True)
-  - contact: ALPeopleList.using(object_type=Individual, there_is_another=True, complete_attribute='complete') 
+  - contact: ALPeopleList.using(object_type=Individual, complete_attribute='complete') 
 ---
 sections:
   - review_Case_Opening_Form: Review your answers
@@ -503,52 +503,37 @@ code: |
   contact[i].name.first
   contact[i].name.last
   contact[i].realtionship
-
   contact[i].address.address
   contact[i].mobile_number
   contact[i].complete = True
 ---
 id: Contacts
-  - contact[x].name.first
-  - contact[x].name.last
-generic object: ALIndividual
 question: |
   Contacts
-list collect: True
 fields:
   - "Relationship to case": contact[i].realtionship
     maxlength: 50
-  - code: |
-      contact[x].name_fields()
 ---
 id: contacts contact info
 generic object: ALIndividual
 question: | 
   What is their contact information 
 fields: 
-  - code: |
-      contact[x].mailing_address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
-  - "Contact1 email": Contact1_email
+  - "Contact email": contact[i].email 
     maxlength: 39
     required: False
-  - "Contact1 phone number": Contact1_phone_number
+  - "Contact phone number": contact[i].mobile_number 
     maxlength: 50
     required: False
-  - "Contact1 address same": Contact1_Address_same
-    datatype: yesno
-    required: False
-  - "Contact1 address city": Contact1_address_city
-    maxlength: 46
-    required: False
-  - "Contact1 address state": Contact1_address_state
-    maxlength: 28
-    required: False
-  - "Contact1 address street": Contact1_address_street
-    maxlength: 78
-    required: False
-  - "Contact1 address zip": Contact1_address_zip
-    maxlength: 24
-    required: False
+---
+id: another contact 
+question: |
+  Do you have another contact to add to the case?
+subquestion: |
+  % if len(contact.elements) > 0:  
+  So far you have told us about ${comma_and_list(contact.complete_elements())}.
+  % endif
+yesno: contact[i].there_is_another 
 ---
 id: Conflict Information
 question: |
@@ -830,10 +815,10 @@ review:
     button: |
       **Contact1 email**:
       ${ Contact1_email }
-  - Edit: Contact1_phone_number
+  - Edit: contant[i].mobile_number
     button: |
       **Contact1 phone number**:
-      ${ Contact1_phone_number }
+      ${ contant[i].mobile_number }
   - Edit: Contact1_Address_same
     button: |
       **Contact1 address same**:
@@ -1075,7 +1060,7 @@ attachments:
       - "Contact1_relation": ${ Contact1_relation }
       - "Contact1_name": ${ Contact1_name }
       - "Contact1_email": ${ Contact1_email }
-      - "Contact1_phone_number": ${ Contact1_phone_number }
+      - "Contact1_phone_number": ${ contant[i].mobile_number }
       - "Contact1_Address_same": ${ Contact1_Address_same }
       - "Contact1_address_city": ${ Contact1_address_city }
       - "Contact1_address_state": ${ Contact1_address_state }
