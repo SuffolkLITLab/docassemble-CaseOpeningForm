@@ -55,8 +55,7 @@ code: |
   al_form_type = 'other_form'
 ---
 objects:
-  - users: ALPeopleList.using(there_are_any=True)
-  - studentattorney: ALPeopleList.using(there_are_any=True, ask_number=True)
+  - studentattorney: ALPeopleList.using(there_are_any=True, ask_number=True, complete_attribute='complete')
   - client: ALPeopleList.using(target_number=1,ask_number=True)
   - parent: ALPeopleList.using(target_number=1,ask_number=True)
   - contact: ALPeopleList.using(object_type=Individual, complete_attribute='complete') 
@@ -73,16 +72,19 @@ code: |
   allowed_courts = interview_metadata["Case_Opening_Form"]["allowed courts"]
   nav.set_section('review_Case_Opening_Form')
   user_role = 'na'
-  contact.there_are_any
-  contact.gather()
   studentattorney.target_number
   studentattorney.gather()
   Clinic_Practice_Area
-  Case_Description
   client.gather()
   client[0].mobile_number
-  client[0].mailing_address.address
+  if unhoused_client:
+    client[0].mailing_address.address = ' '
+    client[0].mailing_address.city = ' '
+    client[0].mailing_address.state = ' ' 
+    client[0].mailing_address.zip = ' '  
   client_optional_info
+  Case_Description
+
   set_progress(25)
   opp_name
   Knows_opp_address_city
@@ -123,11 +125,16 @@ fields:
     datatype: integer
     min: 1
 ---
+code: |
+  studentattorney[i].name.first
+  studentattorney[i].name.last
+  studentattorney[i].complete = True
+---
 id: Background Information
 sets:
   - studentattorney[x].name.first
   - studentattorney[x].name.last
-  - studentattorney[x].email
+generic object: ALPeopleList
 question: |
   What is the ${ ordinal(x) } student attorney name?
 fields:
@@ -136,8 +143,24 @@ fields:
 ---
 id: clinic information 
 question: |
-  Clinic information
+  Select your clinic 
 fields: 
+  - "Clinic": Clinic_Practice_Area
+    maxlength: 28
+    input type: dropdown
+    choices:
+      - Accelerator Practice: Accelerator Practice
+      - Family Advocacy Clinic: Family Advocacy Clinic
+      - Health Law Clinic: Health Law Clinic
+      - Immigration Clinic: Immigration Clinic
+      - Human Rights and Indigenous Peoples Clinic: Human Rights and Indigenous Peoples Clinic
+      - Innocence Clinic: Innocence Clinic
+      - Intellectual Property & Entrepreneurship Clinic: Intellectual Property & Entrepreneurship Clinic
+      - Juvenile Defenders Clinic: Juvenile Defenders Clinic
+      - Suffolk Defenders Program: Suffolk Defenders Program
+      - Suffolk Prosecutors Program: Suffolk Prosecutors Program
+      - Supreme Court Clinic: Supreme Court Clinic
+      - Transactional Clinic: Transactional Clinic
   - "Supervisor Name": Supervisor_name
     maxlength: 86
     input type: dropdown
@@ -163,22 +186,6 @@ fields:
     show if:
       variable: Supervisor_name
       is: Other
-  - "Clinic Practice Area": Clinic_Practice_Area
-    maxlength: 28
-    input type: dropdown
-    choices:
-      - Accelerator Practice: Accelerator Practice
-      - Family Advocacy Clinic: Family Advocacy Clinic
-      - Health Law Clinic: Health Law Clinic
-      - Immigration Clinic: Immigration Clinic
-      - Human Rights and Indigenous Peoples Clinic: Human Rights and Indigenous Peoples Clinic
-      - Innocence Clinic: Innocence Clinic
-      - Intellectual Property & Entrepreneurship Clinic: Intellectual Property & Entrepreneurship Clinic
-      - Juvenile Defenders Clinic: Juvenile Defenders Clinic
-      - Suffolk Defenders Program: Suffolk Defenders Program
-      - Suffolk Prosecutors Program: Suffolk Prosecutors Program
-      - Supreme Court Clinic: Supreme Court Clinic
-      - Transactional Clinic: Transactional Clinic
 ---
 id: Case Information
 question: |
@@ -248,31 +255,30 @@ fields:
 ---
 id: additional client info
 question: | 
-  Optional questions about your client
+  Additional demographic information about ${client[0].name.first}
 subquestion: |
   If the information is unknown or not applicable that is okay.
 fields: 
-  - "Client birthdate": client_birthdate
-    datatype: date
+  - "Birthdate": client[0].birthdate
+    datatype: birthdate
     maxlength: 12
-    required: False
-  - "Client gender": Client_gender
+  - "Gender": Client_gender
     maxlength: 33
     required: False
-  - "Client race": Client_Race
+  - "Race": Client_Race
     maxlength: 100
     required: False 
-  - "Client marital status": Client_MaritalStatus
+  - "Marital status": Client_MaritalStatus
     maxlength: 98
     required: False
-  - "Client aliases or other names": Client_Aliases
+  - "Aliases or other names": Client_Aliases
     maxlength: 80
     required: False
 continue button field: client_optional_info
 ---
 id: Client Contact Information
 question: |
-  Client's contact information
+  Enter  ${client[0].name.first}'s contact information
 fields:  
   - Mobile number: client[0].mobile_number
     required: False
@@ -281,7 +287,7 @@ fields:
   - Email address: client[0].email    
     datatype: email
     required: False
-  - Other ways to reach your client: client[0].other_contact_method
+  - Notes about ways to reach your client: client[0].other_contact_method
     input type: area
     required: False
     help: |
@@ -311,13 +317,12 @@ fields:
   - code: |
       client[0].mailing_address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
 ---
-code: |
-if address_unknown:
-  client[0].address.address = ' '
-  client[0].address.unit = ' '
-  client[0].address.city = ' '
-  client[0].address.state = ' ' 
-  client[0].address.zip = ' '  
+code: | 
+if unhoused_client:
+  client[0].mailing_address.address = ' '
+  client[0].mailing_address.city = ' '
+  client[0].mailing_address.state = ' ' 
+  client[0].mailing_address.zip = ' '  
 ---
 id: Client Background Information
 question: |
@@ -503,28 +508,54 @@ code: |
   contact[i].name.first
   contact[i].name.last
   contact[i].realtionship
+  contact[i].birthdate
   contact[i].address.address
   contact[i].mobile_number
   contact[i].complete = True
 ---
-id: Contacts
+id: contact relationship
 question: |
-  Contacts
+  What is ${ contact[i].name.first}'s relationship to the case?
 fields:
-  - "Relationship to case": contact[i].realtionship
+  - no label: contact[i].realtionship
     maxlength: 50
+    hint: e.g Witness, alleged victim, parent
+---
+id: birthdate question
+generic object: ALIndividual
+question: |
+  When was ${ contact[i].name.first} born?
+fields:
+  - Birthdate: client[i].birthdate
+    required: False
+    datatype: BirthDate
 ---
 id: contacts contact info
 generic object: ALIndividual
 question: | 
-  What is their contact information 
+  What is ${ contact[i].name.first}'s contact information 
 fields: 
-  - "Contact email": contact[i].email 
-    maxlength: 39
+  - Other phone number: contact[0].phone_number
     required: False
   - "Contact phone number": contact[i].mobile_number 
     maxlength: 50
     required: False
+  - "Contact email": contact[i].email 
+    maxlength: 39
+    required: False
+  - Other ways to reach your client: contact[0].other_contact_method
+    input type: area
+    required: False
+    help: |
+      If you do not have a phone number or email, provide
+      specific contact instructions.
+#validation code: |
+#  if (not showifdef('client[0].phone_number') and \
+#      (not showifdef('client[0].mobile_number')) and \
+#      (not showifdef('client[0].email')) and \
+#      (not showifdef('client[0].other_contact_method'))):
+#    validation_error(word("You need to provide at least one contact method."), field="client[0].other_contact_method")
+  
 ---
 id: another contact 
 question: |
@@ -540,18 +571,16 @@ question: |
   Conflict Information
 fields:
   - "Conflict check complete": ConflictCheckComplete
-    datatype: yesno
+    datatype: yesnowide
   - "Conflict check results attached": ConflictCheckResultsAttached
     show if: ConflictCheckComplete
     required: False
-    datatype: yesno
+    datatype: yesnowide
   - "Date of conflict check": Date_ConflictCheck
     show if: ConflictCheckComplete
-    required: False
     maxlength: 9
   - "Description of conflict check": Description_Conflict
     show if: ConflictCheckComplete
-    required: False
     input type: area
     maxlength: 294
 ---
