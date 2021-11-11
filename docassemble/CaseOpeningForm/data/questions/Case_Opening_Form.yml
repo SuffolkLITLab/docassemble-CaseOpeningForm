@@ -527,11 +527,7 @@ question: |
   What is their contact information 
 fields: 
   - code: |
-      client[0].mailing_address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
-
-
-
-
+      contact[x].mailing_address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
   - "Contact1 email": Contact1_email
     maxlength: 39
     required: False
