@@ -55,7 +55,7 @@ code: |
   al_form_type = 'other_form'
 ---
 objects:
-  - studentattorney: ALPeopleList.using(there_are_any=True, ask_number=True, complete_attribute='complete')
+  - studentattorney: ALPeopleList.using(ask_number=True, complete_attribute='complete')
   - client: ALPeopleList.using(target_number=1,ask_number=True)
   - parent: ALPeopleList.using(target_number=1,ask_number=True)
   - contact: ALPeopleList.using(object_type=Individual, complete_attribute='complete') 
@@ -74,20 +74,32 @@ code: |
   user_role = 'na'
   studentattorney.target_number
   studentattorney.gather()
+  users[0].name.first = studentattorney[0].name.first
+  users[0].name.last = studentattorney[0].name.last
+  users.there_is_another = False
   Clinic_Practice_Area
   client.gather()
   client[0].mobile_number
   if unhoused_client:
-    client[0].mailing_address.address = ' '
+    client[0].mailing_address.address = 'Client is homeless'
     client[0].mailing_address.city = ' '
     client[0].mailing_address.state = ' ' 
     client[0].mailing_address.zip = ' '  
   client_optional_info
-  Case_Description
-
   set_progress(25)
-  opp_name
-  Knows_opp_address_city
+  Case_Description
+  Court_Agency_Docket__number
+  set_progress(50)
+  if opp_is_state:
+    opp_name = 'Commonwealth'
+    opp_address_street = ' ' 
+    opp_address_city = ' '
+    opp_address_zip = ' ' 
+    opp_email = ' '
+    opp_phone_number = ' ' 
+    opp_alt1_number = ' ' 
+    opp_alt2_number = ' ' 
+  opp_address_street
   contact.there_are_any
   contact.gather()
   ConflictCheckComplete
@@ -104,7 +116,7 @@ code: |
   interview_order_Case_Opening_Form
   signature_date
   # Save anonymized interview statistics (customize the saved data below)
-  store_variables_snapshot(data={'zip': users[0].address.zip})
+  #store_variables_snapshot(data={'zip': users[0].address.zip})
   Case_Opening_Form_preview_question
   basic_questions_signature_flow
   Case_Opening_Form_download
@@ -209,26 +221,21 @@ fields:
     maxlength: 96
     required: False
     hint: e.g., Full, Bail only, etc.
-  - note: |
-      Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.
-  - "Assigned Judge": Knows_Judge
-    datatype: yesno
+---
+id: optional case information 
+question: | 
+  Optional case information 
+fields: 
+  - "Docket number": Court_Agency_Docket__number
+    maxlength: 96
+    required: False
   - "Judge name": Judge_name
     maxlength: 48
     required: False
-    show if: Knows_Judge
-  - "Court or Agency name.": Knows_Court_Agency
-    datatype: yesno
   - "Court or Agency name": Court_Agency
     maxlength: 42
     required: False
-    show if: Knows_Court_Agency
-  - "Court or Agency docket number.": Knows_Court_Agency_Docket__number
-    datatype: yesno
-  - "Court or Agency docket  number": Court_Agency_Docket__number
-    maxlength: 96
-    required: False
-    show if: Knows_Court_Agency_Docket__number
+
 ---
 id: Client Basic Information
 generic object: ALPeopleList
@@ -248,6 +255,9 @@ fields:
       - Mx.: Mx.
   - code: |
       client[0].name_fields()
+  - "Aliases or other names": Client_Aliases
+    maxlength: 80
+    required: False
   - "Notes about Client": Client_Notes
     input type: area
     maxlength: 360
@@ -255,14 +265,14 @@ fields:
 ---
 id: additional client info
 question: | 
-  Additional demographic information about ${client[0].name.first}
+  Demographic information about ${client[0].name.first}
 subquestion: |
   If the information is unknown or not applicable that is okay.
 fields: 
   - "Birthdate": client[0].birthdate
     datatype: birthdate
     maxlength: 12
-  - "Gender": Client_gender
+  - "Gender expression": Client_gender
     maxlength: 33
     required: False
   - "Race": Client_Race
@@ -270,9 +280,6 @@ fields:
     required: False 
   - "Marital status": Client_MaritalStatus
     maxlength: 98
-    required: False
-  - "Aliases or other names": Client_Aliases
-    maxlength: 80
     required: False
 continue button field: client_optional_info
 ---
@@ -289,6 +296,7 @@ fields:
     required: False
   - Notes about ways to reach your client: client[0].other_contact_method
     input type: area
+    maxlength: 100
     required: False
     help: |
       If you do not have a phone number or email, provide
@@ -381,22 +389,13 @@ fields:
     required: False
     show if: Knows_Client_Imm_Status
 ---
-id: Opposition Information
+id: opposition information
 question: |
-  Opposition Information
+  Information about the other side
 fields:
-  - "Opposition name": opp_name
-    maxlength: 80
-  - "Notes about Opposition": opp_Notes
-    input type: area
-    maxlength: 270
-    required: False
-  - note: |
-      **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**  
-  - note: |
-      *Background Information*
-  - "Opposition title": Knows_opp_title
+  - "The Commonwealth is the opposing party": opp_is_state 
     datatype: yesno
+    disable others: True
   - "Opposition title": opp_title
     maxlength: 80
     required: False
@@ -407,35 +406,29 @@ fields:
       - Mrs.: Mrs.
       - Ms.: Ms.
       - Other: Other
+  - "Name": opp_name
+    maxlength: 80
+  - "Company": opp_company
+    maxlength: 100
+    required: False
+  - "Notes about Opposition": opp_Notes
+    input type: area
+    maxlength: 270
+    required: False
   - "Other title": opp_title
     show if:
       variable: opp_title
       is: Other
-  - "Opposition gender": Knows_opp_GenderExpression
-    datatype: yesno
-  - "Opposition gender": opp_GenderExpression
+  - "Gender": opp_GenderExpression
     maxlength: 66
     required: False
-    show if: Knows_opp_GenderExpression
-  - "Opposition company": Knows_opp_company
-    datatype: yesno
-  - "Opposition company": opp_company
-    maxlength: 100
-    required: False
-    show if: Knows_opp_company
-  - "Opposition date of birth": Knows_opp_DateOfBirth
-    datatype: yesno
-  - "Opposition date of birth": opp_DateOfBirth
+  - "Date of birth": opp_DateOfBirth
     maxlength: 11
     required: False
-    show if: Knows_opp_DateOfBirth
-  - "Opposition aliases or other names": Knows_opp_Aliases_names
-    datatype: yesno
-  - "Opposition aliases or other names": opp_Aliases_names
+  - "Aliases or other names": opp_Aliases_names
     input type: area
     maxlength: 180
     required: False
-    show if: Knows_opp_Aliases_names
 ---
 id: Opposition Contact Information
 question: |
@@ -443,46 +436,29 @@ question: |
 fields:
   - note: |
       **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**
-  - "Street Address": Knows_opp_address_city
-    datatype: yesno
   - "Opposition address street": opp_address_street
     maxlength: 80
     required: False
-    show if: Knows_opp_address_city
   - "Opposition address city": opp_address_city
     maxlength: 48
     required: False
-    show if: Knows_opp_address_city
   - "Opposition address zip": opp_address_zip
     maxlength: 50
     required: False
-    show if: Knows_opp_address_city
-  - "Opposition email": Knows_opp_email
-    datatype: yesno
   - "Opposition email": opp_email
     maxlength: 100
     required: False
-    show if: Knows_opp_email
-  - "Opposition phone number": Knows_opp_phone_number
-    datatype: yesno
   - "Opposition phone number": opp_phone_number
     maxlength: 42
     required: False
-    show if: Knows_opp_phone_number
-  - "Any other phone numbers?": Knows_opp_alt1_number
-    datatype: yesno
-    show if: Knows_opp_phone_number
   - "Alternative number": opp_alt1_number
     maxlength: 38
     required: False
-    show if: Knows_opp_alt1_number
   - "Any other phone numbers?": Knows_opp_alt2_number
     datatype: yesno
-    show if: Knows_opp_alt1_number
   - "Alternative number": opp_alt2_number
     maxlength: 50
     required: False
-    show if: Knows_opp_alt2_number
   - note: |
       *Language and Immigration Information*
   - "Opposition interpreter": Knows_Opp_Interpreter
@@ -577,8 +553,8 @@ fields:
     required: False
     datatype: yesnowide
   - "Date of conflict check": Date_ConflictCheck
+    datatype: date
     show if: ConflictCheckComplete
-    maxlength: 9
   - "Description of conflict check": Description_Conflict
     show if: ConflictCheckComplete
     input type: area
@@ -994,7 +970,7 @@ event: Case_Opening_Form_download
 question: |
   Your form is ready to download.
 subquestion: |
-  Thank you ${users}. Your form is ready to download and deliver.
+  Thank you {users}. Your form is ready to download and deliver.
   
   View, download and send your form below. Click the "Make changes" button to fix any mistakes.
 
@@ -1030,10 +1006,10 @@ attachments:
       - "Today_date": ${ today(format='MM/dd/YYYY') }
       - "Supervisor_name": ${ Supervisor_name }
       - "Clinic_Practice_Area": ${ Clinic_Practice_Area }
-      - "Student_Atty_name": ${ studentattorney[0].name }
+      - "Student_Atty_name": ${ studentattorney }
       - "ConflictCheckResultsAttached": ${ ConflictCheckResultsAttached }
       - "ConflictCheckComplete": ${ ConflictCheckComplete }
-      - "Date_ConflictCheck": ${ Date_ConflictCheck }
+      - "Date_ConflictCheck": ${ Date_ConflictCheck(format='MM/dd/YY') }
       - "Description_Conflict": ${ Description_Conflict }
       - "Case_Description": ${ Case_Description }
       - "Judge_name": ${ Judge_name }
@@ -1043,7 +1019,7 @@ attachments:
       - "Scope_Of_Representation": ${ Scope_Of_Representation }
       - "Case_Type": ${ Case_Type }
       - "Case__synopsis": ${ Case__synopsis }
-      - "client_birthdate": ${ client_birthdate }
+      - "client_birthdate": ${ client[0].birthdate }
       - "Client_gender": ${ Client_gender }
       - "Client_Name": ${ client[0].name }
       - "Client_Company": ${ Client_Company }
@@ -1058,13 +1034,13 @@ attachments:
           ${ Client_Public_Housing }
           % endif
       - "client_phone_number": ${ client[0].mobile_number}
-      - "client_other1_number": ${ client[0].other_contact_method }
-      # "client_other2_number": ${ client_other2_number }
+      - "client_other1_number": ${ client[0].phone_number }
+      - "client_other2_number": ${ client[0].other_contact_method  }
       - "Client_Interpreter": ${ Client_Interpreter }
       - "Client_Primary_Languages": ${ Client_Primary_Languages }
       - "Client_Race": ${ Client_Race }
       - "Client_Imm_Status": ${ Client_Imm_Status }
-      - "Client_email": ${ Client_email }
+      - "Client_email": ${ client[0].email }
       - "Client_Income": ${ Client_Income }
       - "Client_Source_Income": ${ Client_Source_Income }
       - "Client_NumberOfDependents": ${ Client_NumberOfDependents }
@@ -1091,7 +1067,7 @@ attachments:
       - "Contact1_email": ${ Contact1_email }
       - "Contact1_phone_number": ${ contant[i].mobile_number }
       - "Contact1_Address_same": ${ Contact1_Address_same }
-      - "Contact1_address_city": ${ Contact1_address_city }
+      - "Contact1_address_line_two": ${ address.line_two() }
       - "Contact1_address_state": ${ Contact1_address_state }
       - "Contact1_address_street": ${ Contact1_address_street }
       - "Contact1_address_zip": ${ Contact1_address_zip }
