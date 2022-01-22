@@ -58,7 +58,8 @@ objects:
   - studentattorney: ALPeopleList.using(ask_number=True, complete_attribute='complete')
   - client: ALPeopleList.using(target_number=1,ask_number=True)
   - parent: ALPeopleList.using(target_number=1,ask_number=True)
-  - contact: ALPeopleList.using(object_type=Individual, complete_attribute='complete') 
+  - contact: ALPeopleList.using(object_type=Individual, complete_attribute='complete')
+  - other_parties: ALPeopleList.using(target_number=1,ask_number=True)
 ---
 sections:
   - review_Case_Opening_Form: Review your answers
@@ -86,20 +87,23 @@ code: |
     client[0].mailing_address.state = ' ' 
     client[0].mailing_address.zip = ' '  
   client_optional_info
+  Client_Company
   set_progress(25)
   Case_Description
   Court_Agency_Docket__number
   set_progress(50)
+  other_parties.gather()
   if opp_is_state:
-    opp_name = 'Commonwealth'
-    opp_address_street = ' ' 
-    opp_address_city = ' '
-    opp_address_zip = ' ' 
-    opp_email = ' '
-    opp_phone_number = ' ' 
-    opp_alt1_number = ' ' 
-    opp_alt2_number = ' ' 
-  opp_address_street
+    other_parties[0].name = 'Commonwealth'
+    other_parties[0].address.address = ' ' 
+    other_parties[0].address.city = ' '
+    other_parties[0].address.zip = ' ' 
+    other_parties[0].email  = ' '
+    other_parties[0].mobile_number = ' ' 
+    other_parties[0].phone_number = ' ' 
+    other_parties[0].alternative_number  = ' '     
+  other_parties[0].mobile_number
+  other_parties[0].address.address
   contact.there_are_any
   contact.gather()
   ConflictCheckComplete
@@ -144,14 +148,13 @@ code: |
 ---
 id: Background Information
 sets:
-  - studentattorney[x].name.first
-  - studentattorney[x].name.last
-generic object: ALPeopleList
+  - studentattorney[i].name.first
+  - studentattorney[i].name.last
 question: |
-  What is the ${ ordinal(x) } student attorney name?
+  What is the ${ ordinal(i) } student attorney name?
 fields:
   - code: |
-      studentattorney[x].name_fields()
+      studentattorney[i].name_fields()
 ---
 id: clinic information 
 question: |
@@ -334,28 +337,24 @@ if unhoused_client:
 ---
 id: Client Background Information
 question: |
-  Client Background Information
+  Information about ${ client[0].name.first}'s income
+subquestion: | 
+  These fields are not required. Fill in as much as you can. 
 fields:
-  - note: |
-      **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**
-  - note: |
-      *Income Information*
-  - "Client company": Knows_Client_Company
-    datatype: yesno
-  - "Client company": Client_Company
+  - "Name of company": Client_Company
     maxlength: 50
     required: False
-    show if: Knows_Client_Company 
-  - "Client Income information": Knows_Client_Income
-    datatype: yesno
-  - "Client source of income": Client_Source_Income
+  - "Source of income": Client_Source_Income
     maxlength: 100
     required: False
-    show if: Knows_Client_Income
-  - "Client income": Client_Income
+  - "Household monthly income": Client_Income
     maxlength: 40
     required: False
-    show if: Knows_Client_Income
+--- 
+id: client language information 
+question: | 
+
+fields: 
   - "Client number of dependents": Knows_Client_NumberOfDependents
     datatype: yesno   
   - "Client number of dependents": Client_NumberOfDependents
@@ -389,6 +388,18 @@ fields:
     required: False
     show if: Knows_Client_Imm_Status
 ---
+code: |
+  other_parties[i].name.first
+  other_parties[i].name.last
+  other_parties[i].address.address
+  other_parties[i].mobile_number
+  other_parties[i].complete = True
+---
+sets:
+  - other_parties[i].name.first
+  - other_parties[i].name.last
+  - other_parties[i].name.middle
+  - other_parties[i].name.suffix
 id: opposition information
 question: |
   Information about the other side
@@ -396,83 +407,78 @@ fields:
   - "The Commonwealth is the opposing party": opp_is_state 
     datatype: yesno
     disable others: True
-  - "Opposition title": opp_title
-    maxlength: 80
+  - code: |
+      other_parties[i].name_fields(person_or_business='unsure')
+  - "Title": other_parties[0].title 
     required: False
-    show if: Knows_opp_title
-    input type: dropdown
-    choices:
-      - Mr.: Mr.
-      - Mrs.: Mrs.
-      - Ms.: Ms.
-      - Other: Other
-  - "Name": opp_name
-    maxlength: 80
-  - "Company": opp_company
-    maxlength: 100
+  - "Aliases or other names": other_parties[0].alias
+    maxlength: 180
+    required: False
+  - "Gender expression": other_parties[0].gender
+    maxlength: 66
+    required: False
+  - "Date of birth": other_parties[0].birthdate
+    datatype: birthdate
+    maxlength: 11
     required: False
   - "Notes about Opposition": opp_Notes
     input type: area
     maxlength: 270
     required: False
-  - "Other title": opp_title
-    show if:
-      variable: opp_title
-      is: Other
-  - "Gender": opp_GenderExpression
-    maxlength: 66
-    required: False
-  - "Date of birth": opp_DateOfBirth
-    maxlength: 11
-    required: False
-  - "Aliases or other names": opp_Aliases_names
-    input type: area
-    maxlength: 180
-    required: False
 ---
 id: Opposition Contact Information
 question: |
-  Opposition Contact Information
-fields:
-  - note: |
-      **Check the below boxes if you know the corresponding information.  If the information is unknown or not applicable, do not check the box.**
-  - "Opposition address street": opp_address_street
-    maxlength: 80
+  Enter  ${other_parties[0].name.first}'s contact information
+fields:  
+  - Phone number: other_parties[0].mobile_number
     required: False
-  - "Opposition address city": opp_address_city
-    maxlength: 48
+  - Alternative phone number: other_parties[0].phone_number
     required: False
-  - "Opposition address zip": opp_address_zip
-    maxlength: 50
+  - Second alternative phone number: other_parties[0].alternative_number 
     required: False
-  - "Opposition email": opp_email
+  - Email address: other_parties[0].email    
+    datatype: email
+    required: False
+  - Notes about ways to reach the other party: other_parties[0].other_contact_method
+    input type: area
     maxlength: 100
     required: False
-  - "Opposition phone number": opp_phone_number
-    maxlength: 42
-    required: False
-  - "Alternative number": opp_alt1_number
-    maxlength: 38
-    required: False
-  - "Any other phone numbers?": Knows_opp_alt2_number
-    datatype: yesno
-  - "Alternative number": opp_alt2_number
-    maxlength: 50
-    required: False
-  - note: |
-      *Language and Immigration Information*
-  - "Opposition interpreter": Knows_Opp_Interpreter
-    datatype: yesno
-  - "Opposition interpreter": Opp_Interpreter
-    maxlength: 12
-    required: False
-    show if: Knows_Opp_Interpreter
-  - "Opposition primarylanguages": Knows_PrimaryLanguages
-    datatype: yesno
-  - "Opposition primarylanguages": opp_PrimaryLanguages
-    maxlength: 38
-    required: False
-    show if: Knows_PrimaryLanguages
+    help: |
+      If you do not have a phone number or email, provide
+      specific contact instructions.
+#validation code: |
+# if (not showifdef('other_parties[0].phone_number') and \
+#     (not showifdef('other_parties[0].mobile_number')) and \
+#     (not showifdef('other_parties[0].email')) and \
+#     (not showifdef('other_parties[0].other_contact_method'))):
+#   validation_error(word("You need to provide at least one contact method."), field="other_parties[0].other_contact_method")
+---
+# - note: |
+#     *Language and Immigration Information*
+# - "Opposition interpreter": Knows_Opp_Interpreter
+#   datatype: yesno
+# - "Opposition interpreter": Opp_Interpreter
+#   maxlength: 12
+#   required: False
+#   show if: Knows_Opp_Interpreter
+# - "Opposition primarylanguages": Knows_PrimaryLanguages
+#   datatype: yesno
+# - "Opposition primarylanguages": opp_PrimaryLanguages
+#   maxlength: 38
+#   required: False
+#   show if: Knows_PrimaryLanguages
+---
+generic object: ALIndividual
+id: other party mailing address
+sets:
+  - other_parties[0].mailing_address.address
+  - other_parties[0].mailing_address.city
+  - other_parties[0].mailing_address.zip
+question: |
+  What is ${other_parties[0].name.first}'s address?
+fields:
+  - code: |
+      client[0].mailing_address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
 ---
 id: any contacts
 question: |
@@ -1023,7 +1029,7 @@ attachments:
       - "Client_gender": ${ Client_gender }
       - "Client_Name": ${ client[0].name }
       - "Client_Company": ${ Client_Company }
-      - "Client_title": ${ Client_title }
+      - "Client_title": ${ other_parties[0].title }
       - "Client_MaritalStatus": ${ Client_MaritalStatus }
       - "Client_Aliases": ${ Client_Aliases }
       - "Client_address_street": ${ client[0].mailing_address.address }
@@ -1046,22 +1052,25 @@ attachments:
       - "Client_NumberOfDependents": ${ Client_NumberOfDependents }
       - "Client_Number_Household": ${ Client_Number_Household }
       - "Client_Notes": ${ Client_Notes }
-      - "opp_DateOfBirth": ${ opp_DateOfBirth }
-      - "opp_name": ${ opp_name }
+      
+      - "opp_DateOfBirth": ${ other_parties[0].birthdate }
+      - "opp_name": ${ other_parties[0].name.full() }
       - "opp_GenderExpression": ${ opp_GenderExpression }
       - "opp_title": ${ opp_title }
       - "opp_company": ${ opp_company }
       - "opp_Aliases_names": ${ opp_Aliases_names }
-      - "opp_address_city": ${ opp_address_city }
-      - "opp_address_zip": ${ opp_address_zip }
-      - "opp_address_street": ${ opp_address_street }
-      - "opp_alt1_number": ${ opp_alt1_number }
-      - "opp_alt2_number": ${ opp_alt2_number }
-      - "opp_phone_number": ${ opp_phone_number }
+      - "opp_address_city": ${ other_parties[0].address.city }
+      - "opp_address_zip": ${ other_parties[0].address.zip }
+      - "opp_address_street": ${ other_parties[0].address.address }
+      - "opp_alt1_number": ${ other_parties[0].phone_number }
+      - "opp_alt2_number": ${ other_parties[0].alternative_number }
+      - "opp_phone_number": ${ other_parties[0].mobile_number }
       - "Opp_Interpreter": ${ Opp_Interpreter }
       - "opp_PrimaryLanguages": ${ opp_PrimaryLanguages }
-      - "opp_email": ${ opp_email }
+      - "opp_email": ${ other_parties[0].email }
       - "opp_Notes": ${ opp_Notes }
+      
+      
       - "Contact1_relation": ${ Contact1_relation }
       - "Contact1_name": ${ Contact1_name }
       - "Contact1_email": ${ Contact1_email }
