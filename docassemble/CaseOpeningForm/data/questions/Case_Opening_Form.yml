@@ -56,10 +56,10 @@ code: |
 ---
 objects:
   - studentattorney: ALPeopleList.using(ask_number=True, complete_attribute='complete')
-  - client: ALPeopleList.using(target_number=1,ask_number=True)
+  - client: ALPeopleList.using(target_number=1,ask_number=True, complete_attribute='complete')
   - parent: ALPeopleList.using(target_number=1,ask_number=True)
   - contact: ALPeopleList.using(object_type=Individual, complete_attribute='complete')
-  - other_parties: ALPeopleList.using(target_number=1,ask_number=True)
+  - other_parties: ALPeopleList.using(target_number=1,ask_number=True, complete_attribute='complete')
 ---
 sections:
   - review_Case_Opening_Form: Review your answers
@@ -80,30 +80,15 @@ code: |
   users.there_is_another = False
   Clinic_Practice_Area
   client.gather()
-  client[0].mobile_number
-  if unhoused_client:
-    client[0].mailing_address.address = 'Client is homeless'
-    client[0].mailing_address.city = ' '
-    client[0].mailing_address.state = ' ' 
-    client[0].mailing_address.zip = ' '  
+
   client_optional_info
-  Client_Company
+  Client_Source_Income
   set_progress(25)
   Case_Description
   Court_Agency_Docket__number
   set_progress(50)
   other_parties.gather()
-  if opp_is_state:
-    other_parties[0].name = 'Commonwealth'
-    other_parties[0].address.address = ' ' 
-    other_parties[0].address.city = ' '
-    other_parties[0].address.zip = ' ' 
-    other_parties[0].email  = ' '
-    other_parties[0].mobile_number = ' ' 
-    other_parties[0].phone_number = ' ' 
-    other_parties[0].alternative_number  = ' '     
-  other_parties[0].mobile_number
-  other_parties[0].address.address
+    
   contact.there_are_any
   contact.gather()
   ConflictCheckComplete
@@ -227,7 +212,7 @@ fields:
 ---
 id: optional case information 
 question: | 
-  Optional case information 
+  Case information
 fields: 
   - "Docket number": Court_Agency_Docket__number
     maxlength: 96
@@ -238,26 +223,32 @@ fields:
   - "Court or Agency name": Court_Agency
     maxlength: 42
     required: False
-
+---
+id: client gather 
+code: |
+  client[i].name.first
+  client[i].name.last
+  client[i].birthdate
+  client[i].address.address
+  client[i].mobile_number
+  client[i].primary_language
+  client[i].immigration_status
+  client[i].complete = True
 ---
 id: Client Basic Information
 generic object: ALPeopleList
 sets:
-  - client[0].name.first
-  - client[0].name.last
+  - client[i].name.first
+  - client[i].name.last
 question: |
   What is your client's name?
 fields:
-  - "Title": Client_title
-    required: False
-    input type: dropdown
-    choices:
-      - Mr.: Mr.
-      - Mrs.: Mrs.
-      - Ms.: Ms.
-      - Mx.: Mx.
   - code: |
-      client[0].name_fields()
+      client[i].name_fields()
+  - "Company": Client_Company 
+    required: False 
+  - "Title": Client_Title
+    required: False
   - "Aliases or other names": Client_Aliases
     maxlength: 80
     required: False
@@ -267,12 +258,15 @@ fields:
     required: False
 ---
 id: additional client info
+sets: 
+  - client[i].birthdate
 question: | 
-  Demographic information about ${client[0].name.first}
+  Demographic information about ${client[i].name.first}
 subquestion: |
   If the information is unknown or not applicable that is okay.
 fields: 
-  - "Birthdate": client[0].birthdate
+  - "Birthdate": client[i].birthdate
+    required: False
     datatype: birthdate
     maxlength: 12
   - "Gender expression": Client_gender
@@ -287,38 +281,31 @@ fields:
 continue button field: client_optional_info
 ---
 id: Client Contact Information
+sets: 
+  - client[i].mobile_number
+  - client[i].phone_number
+  - client[i].email   
 question: |
-  Enter  ${client[0].name.first}'s contact information
+  Enter  ${client[i].name.first}'s contact information
 fields:  
-  - Mobile number: client[0].mobile_number
+  - Mobile number: client[i].mobile_number
     required: False
-  - Other phone number: client[0].phone_number
+  - Alternative phone number: client[i].phone_number
     required: False
-  - Email address: client[0].email    
+  - Second alternative phone number: client[i].alternative_number
+    required: False
+  - Email address: client[i].email    
     datatype: email
     required: False
-  - Notes about ways to reach your client: client[0].other_contact_method
-    input type: area
-    maxlength: 100
-    required: False
-    help: |
-      If you do not have a phone number or email, provide
-      specific contact instructions.
-validation code: |
-  if (not showifdef('client[0].phone_number') and \
-      (not showifdef('client[0].mobile_number')) and \
-      (not showifdef('client[0].email')) and \
-      (not showifdef('client[0].other_contact_method'))):
-    validation_error(word("You need to provide at least one contact method."), field="client[0].other_contact_method")
 ---
 generic object: ALIndividual
-id: client mailing address
+id: client  address
 sets:
-  - client[0].mailing_address.address
-  - client[0].mailing_address.city
-  - client[0].mailing_address.zip
+  - client[i].address.address
+  - client[i].address.city
+  - client[i].address.zip
 question: |
-  What is ${client[0].name.first}'s address?
+  What is ${client[i].name.first}'s address?
 fields:
   - Address is public housing: Client_Public_Housing
     datatype: yesnowide
@@ -326,34 +313,50 @@ fields:
     datatype: yesnowide
     disable others: True
   - code: |
-      client[0].mailing_address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
+      client[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
 ---
 code: | 
 if unhoused_client:
-  client[0].mailing_address.address = ' '
-  client[0].mailing_address.city = ' '
-  client[0].mailing_address.state = ' ' 
-  client[0].mailing_address.zip = ' '  
+  client[i].address.address = ' '
+  client[i].address.city = ' '
+  client[i].address.state = ' ' 
+  client[i].address.zip = ' '  
+---
+id: client language questions 
+generic object: ALIndividual
+sets: 
+  - client[i].primary_language
+  - client[i].immigration_status
+question: |
+  What is ${ client[i].name.first }'s primary language(s) 
+fields: 
+  - "Client requires an interpreter": Client_Interpreter
+    datatype: yesnowide
+  - "Primary language(s)": client[i].primary_language
+    required: False
+  - "Immigration status": client[i].immigration_status
+    required: False
 ---
 id: Client Background Information
 question: |
-  Information about ${ client[0].name.first}'s income
-subquestion: | 
-  These fields are not required. Fill in as much as you can. 
+  Information about ${ client[0].name.first}'s household
 fields:
-  - "Name of company": Client_Company
-    maxlength: 50
-    required: False
   - "Source of income": Client_Source_Income
     maxlength: 100
     required: False
   - "Household monthly income": Client_Income
     maxlength: 40
     required: False
+  - "Number of people in their household": Client_Number_Household
+    datatype: integer
+    required: False
+  - "Number of dependents": Client_NumberOfDependents
+    datatype: integer
+    required: False
 --- 
 id: client language information 
 question: | 
-
+   adkfjladsjf
 fields: 
   - "Client number of dependents": Knows_Client_NumberOfDependents
     datatype: yesno   
@@ -388,11 +391,13 @@ fields:
     required: False
     show if: Knows_Client_Imm_Status
 ---
+id: other party gather 
 code: |
-  other_parties[i].name.first
-  other_parties[i].name.last
+  other_parties[i].name
   other_parties[i].address.address
+  other_parties[i].birthdate
   other_parties[i].mobile_number
+  other_parties[i].primary_language
   other_parties[i].complete = True
 ---
 sets:
@@ -400,6 +405,7 @@ sets:
   - other_parties[i].name.last
   - other_parties[i].name.middle
   - other_parties[i].name.suffix
+  - other_parties[i].birthdate
 id: opposition information
 question: |
   Information about the other side
@@ -408,16 +414,18 @@ fields:
     datatype: yesno
     disable others: True
   - code: |
-      other_parties[i].name_fields(person_or_business='unsure')
-  - "Title": other_parties[0].title 
+      other_parties[i].name_fields()
+  - "Company": Opp_Company
     required: False
-  - "Aliases or other names": other_parties[0].alias
+  - "Title": opp_title
+    required: False
+  - "Aliases or other names": opp_Aliases_names
     maxlength: 180
     required: False
-  - "Gender expression": other_parties[0].gender
+  - "Gender expression": opp_GenderExpression
     maxlength: 66
     required: False
-  - "Date of birth": other_parties[0].birthdate
+  - "Date of birth": other_parties[i].birthdate
     datatype: birthdate
     maxlength: 11
     required: False
@@ -425,6 +433,18 @@ fields:
     input type: area
     maxlength: 270
     required: False
+---
+generic object: ALIndividual
+id: other party address
+sets:
+  - other_parties[i].address.address
+  - other_parties[i].address.city
+  - other_parties[i].address.zip
+question: |
+  What is ${other_parties[i].name.first}'s address?
+fields:
+  - code: |
+      other_parties[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
 ---
 id: Opposition Contact Information
 question: |
@@ -439,46 +459,18 @@ fields:
   - Email address: other_parties[0].email    
     datatype: email
     required: False
-  - Notes about ways to reach the other party: other_parties[0].other_contact_method
-    input type: area
-    maxlength: 100
-    required: False
-    help: |
-      If you do not have a phone number or email, provide
-      specific contact instructions.
-#validation code: |
-# if (not showifdef('other_parties[0].phone_number') and \
-#     (not showifdef('other_parties[0].mobile_number')) and \
-#     (not showifdef('other_parties[0].email')) and \
-#     (not showifdef('other_parties[0].other_contact_method'))):
-#   validation_error(word("You need to provide at least one contact method."), field="other_parties[0].other_contact_method")
 ---
-# - note: |
-#     *Language and Immigration Information*
-# - "Opposition interpreter": Knows_Opp_Interpreter
-#   datatype: yesno
-# - "Opposition interpreter": Opp_Interpreter
-#   maxlength: 12
-#   required: False
-#   show if: Knows_Opp_Interpreter
-# - "Opposition primarylanguages": Knows_PrimaryLanguages
-#   datatype: yesno
-# - "Opposition primarylanguages": opp_PrimaryLanguages
-#   maxlength: 38
-#   required: False
-#   show if: Knows_PrimaryLanguages
----
+id: other party language questions 
 generic object: ALIndividual
-id: other party mailing address
-sets:
-  - other_parties[0].mailing_address.address
-  - other_parties[0].mailing_address.city
-  - other_parties[0].mailing_address.zip
+sets: 
+  - other_parties[i].primary_language
 question: |
-  What is ${other_parties[0].name.first}'s address?
-fields:
-  - code: |
-      client[0].mailing_address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
+  What is ${ other_parties[i].name.first }'s primary language(s) 
+fields: 
+  - "${ other_parties[i].name.first } requires an interpreter": Opp_Interpreter
+    datatype: yesnowide
+  - "Primary language(s)": other_parties[i].primary_language
+    required: False
 ---
 id: any contacts
 question: |
@@ -489,35 +481,27 @@ id: contacts gather
 code: |
   contact[i].name.first
   contact[i].name.last
-  contact[i].realtionship
+  contact[i].relationship
   contact[i].birthdate
   contact[i].address.address
   contact[i].mobile_number
   contact[i].complete = True
 ---
 id: contact relationship
+generic object: ALIndividual
 question: |
   What is ${ contact[i].name.first}'s relationship to the case?
 fields:
-  - no label: contact[i].realtionship
+  - no label: contact[i].relationship
     maxlength: 50
     hint: e.g Witness, alleged victim, parent
----
-id: birthdate question
-generic object: ALIndividual
-question: |
-  When was ${ contact[i].name.first} born?
-fields:
-  - Birthdate: client[i].birthdate
-    required: False
-    datatype: BirthDate
 ---
 id: contacts contact info
 generic object: ALIndividual
 question: | 
   What is ${ contact[i].name.first}'s contact information 
 fields: 
-  - Other phone number: contact[0].phone_number
+  - Other phone number: contact[i].phone_number
     required: False
   - "Contact phone number": contact[i].mobile_number 
     maxlength: 50
@@ -525,19 +509,9 @@ fields:
   - "Contact email": contact[i].email 
     maxlength: 39
     required: False
-  - Other ways to reach your client: contact[0].other_contact_method
+  - Other ways to reach your client: contact[i].other_contact_method
     input type: area
     required: False
-    help: |
-      If you do not have a phone number or email, provide
-      specific contact instructions.
-#validation code: |
-#  if (not showifdef('client[0].phone_number') and \
-#      (not showifdef('client[0].mobile_number')) and \
-#      (not showifdef('client[0].email')) and \
-#      (not showifdef('client[0].other_contact_method'))):
-#    validation_error(word("You need to provide at least one contact method."), field="client[0].other_contact_method")
-  
 ---
 id: another contact 
 question: |
@@ -1015,8 +989,9 @@ attachments:
       - "Student_Atty_name": ${ studentattorney }
       - "ConflictCheckResultsAttached": ${ ConflictCheckResultsAttached }
       - "ConflictCheckComplete": ${ ConflictCheckComplete }
-      - "Date_ConflictCheck": ${ Date_ConflictCheck(format='MM/dd/YY') }
+      - "Date_ConflictCheck": ${ Date_ConflictCheck}
       - "Description_Conflict": ${ Description_Conflict }
+      
       - "Case_Description": ${ Case_Description }
       - "Judge_name": ${ Judge_name }
       - "Court_Agency": ${ Court_Agency }
@@ -1025,27 +1000,33 @@ attachments:
       - "Scope_Of_Representation": ${ Scope_Of_Representation }
       - "Case_Type": ${ Case_Type }
       - "Case__synopsis": ${ Case__synopsis }
+      
       - "client_birthdate": ${ client[0].birthdate }
       - "Client_gender": ${ Client_gender }
       - "Client_Name": ${ client[0].name }
       - "Client_Company": ${ Client_Company }
-      - "Client_title": ${ other_parties[0].title }
+      - "Client_title": ${ Client_Title }
       - "Client_MaritalStatus": ${ Client_MaritalStatus }
       - "Client_Aliases": ${ Client_Aliases }
-      - "Client_address_street": ${ client[0].mailing_address.address }
-      - "Client_address_city": ${ client[0].mailing_address.city }
-      - "Client_address_zip": ${ client[0].mailing_address.zip }
+      - "Client_address_street": ${ client[0].address.address }
+      - "Client_address_city": ${ client[0].address.city }
+      - "Client_address_zip": ${ client[0].address.zip }
       - "Client_Public_Housing": | 
           % if Client_Public_Housing == True:
           ${ Client_Public_Housing }
           % endif
       - "client_phone_number": ${ client[0].mobile_number}
       - "client_other1_number": ${ client[0].phone_number }
-      - "client_other2_number": ${ client[0].other_contact_method  }
-      - "Client_Interpreter": ${ Client_Interpreter }
-      - "Client_Primary_Languages": ${ Client_Primary_Languages }
+      - "client_other2_number": ${ client[0].alternative_number  }
+      - "Client_Interpreter": | 
+          % if Client_Interpreter == True: 
+          Yes
+          % else: 
+          No
+          % endif
+      - "Client_Primary_Languages": ${ client[0].primary_language  }
       - "Client_Race": ${ Client_Race }
-      - "Client_Imm_Status": ${ Client_Imm_Status }
+      - "Client_Imm_Status": ${ client[0].immigration_status }
       - "Client_email": ${ client[0].email }
       - "Client_Income": ${ Client_Income }
       - "Client_Source_Income": ${ Client_Source_Income }
@@ -1057,7 +1038,7 @@ attachments:
       - "opp_name": ${ other_parties[0].name.full() }
       - "opp_GenderExpression": ${ opp_GenderExpression }
       - "opp_title": ${ opp_title }
-      - "opp_company": ${ opp_company }
+      - "opp_company": ${ Opp_Company }
       - "opp_Aliases_names": ${ opp_Aliases_names }
       - "opp_address_city": ${ other_parties[0].address.city }
       - "opp_address_zip": ${ other_parties[0].address.zip }
@@ -1065,48 +1046,78 @@ attachments:
       - "opp_alt1_number": ${ other_parties[0].phone_number }
       - "opp_alt2_number": ${ other_parties[0].alternative_number }
       - "opp_phone_number": ${ other_parties[0].mobile_number }
-      - "Opp_Interpreter": ${ Opp_Interpreter }
-      - "opp_PrimaryLanguages": ${ opp_PrimaryLanguages }
+      - "Opp_Interpreter": |
+          % if Opp_Interpreter == True: 
+          Yes
+          % else: 
+          No
+          % endif
+      - "opp_PrimaryLanguages": ${ other_parties[0].primary_language }
       - "opp_email": ${ other_parties[0].email }
       - "opp_Notes": ${ opp_Notes }
       
-      
-      - "Contact1_relation": ${ Contact1_relation }
-      - "Contact1_name": ${ Contact1_name }
-      - "Contact1_email": ${ Contact1_email }
-      - "Contact1_phone_number": ${ contant[i].mobile_number }
+      - "Contact1_relation": ${ contact[0].relationship }
+      - "Contact1_name": ${ contact[0].name }
+      - "Contact1_email": ${ contact[0].email }
+      - "Contact1_phone_number": ${ contact[0].phone_numbers() }
       - "Contact1_Address_same": ${ Contact1_Address_same }
-      - "Contact1_address_line_two": ${ address.line_two() }
-      - "Contact1_address_state": ${ Contact1_address_state }
-      - "Contact1_address_street": ${ Contact1_address_street }
-      - "Contact1_address_zip": ${ Contact1_address_zip }
-      - "Contact2_name": ${ Contact2_name }
-      - "Contact2_relation": ${ Contact2_relation }
-      - "Contact2_email": ${ Contact2_email }
-      - "Contact2_phone_number": ${ Contact2_phone_number }
-      - "Contact2_other_number": ${ Contact2_other_number }
+      - "Contact1_address_line_two": ${ contact[0].address.line_two() }
+      - "Contact1_address_street": ${ contact[0].address.line_one() }
+      - "Contact1_address_zip": ${ contact[0].address.zip }
+
+      
+      - "Contact2_name": ${ contact[1].name }
+      - "Contact2_relation": ${ contact[1].relationship}
+      - "Contact2_email": ${ contact[1].email  }
+      - "Contact2_phone_number": ${ contact[1].phone_number }
+      - "Contact2_other_number": ${ contact[1].mobile_number }
       - "Contact2_Address_same": ${ Contact2_Address_same }
-      - "Contact2_address_street": ${ Contact2_address_street }
-      - "Contact2_address_city": ${ Contact2_address_city }
-      - "Contact2_address_state": ${ Contact2_address_state }
-      - "Contact2_address_zip": ${ Contact2_address_zip }
-      - "Contact3_name": ${ Contact3_name }
-      - "Contact3_relation": ${ Contact3_relation }
-      - "Contact3_email": ${ Contact3_email }
-      - "Contact3_phone_number": ${ Contact3_phone_number }
-      - "Contact3_other_number": ${ Contact3_other_number }
+      - "Contact2_address_street": ${ contact[1].address.address }
+      - "Contact2_address_city": ${ contact[1].address.city }
+      - "Contact2_address_state": ${ contact[1].address.state }
+      - "Contact2_address_zip": ${ contact[1].address.zip }
+      
+      - "Contact3_name": ${ contact[2].name }
+      - "Contact3_relation": ${ contact[2].relationship}
+      - "Contact3_email": ${ contact[2].email  }
+      - "Contact3_phone_number": ${ contact[2].phone_number }
+      - "Contact3_other_number": ${ contact[2].mobile_number }
       - "Contact3_Address_same": ${ Contact3_Address_same }
-      - "Contact3_address_city": ${ Contact3_address_city }
-      - "Contact3_address_state": ${ Contact3_address_state }
-      - "Contact3_address_zip": ${ Contact3_address_zip }
-      - "Contact3_address_street": ${ Contact3_address_street }
-      - "Contact4_name": ${ Contact4_name }
-      - "Contact4_relation": ${ Contact4_relation }
-      - "Contact4_email": ${ Contact4_email }
-      - "Contact4_phone_number": ${ Contact4_phone_number }
-      - "Contact4_other_number": ${ Contact4_other_number }
-      - "Contact4_Address_same": ${ Contact4_Address_same }
-      - "Contact4_address_state": ${ Contact4_address_state }
-      - "Contact4_address_street": ${ Contact4_address_street }
-      - "Contact4_address_city": ${ Contact4_address_city }
-      - "Contact4_address_zip": ${ Contact4_address_zip }
+      - "Contact3_address_street": ${ contact[2].address.address }
+      - "Contact3_address_city": ${ contact[2].address.city }
+      - "Contact3_address_state": ${ contact[2].address.state }
+      - "Contact3_address_zip": ${ contact[2].address.zip }
+      
+      
+     #- "Contact3_name": ${ Contact3_name }
+     #- "Contact3_relation": ${ Contact3_relation }
+     #- "Contact3_email": ${ Contact3_email }
+     #- "Contact3_phone_number": ${ Contact3_phone_number }
+     #- "Contact3_other_number": ${ Contact3_other_number }
+     #- "Contact3_Address_same": ${ Contact3_Address_same }
+     #- "Contact3_address_city": ${ Contact3_address_city }
+     #- "Contact3_address_state": ${ Contact3_address_state }
+     #- "Contact3_address_zip": ${ Contact3_address_zip }
+     #- "Contact3_address_street": ${ Contact3_address_street }
+     
+      - "Contact4_name": ${ contact[3].name }
+      - "Contact4_relation": ${ contact[3].relationship}
+      - "Contact4_email": ${ contact[3].email  }
+      - "Contact4_phone_number": ${ contact[3].phone_number }
+      - "Contact4_other_number": ${ contact[3].mobile_number }
+      - "Contact4_Address_same": ${ Contact3_Address_same }
+      - "Contact4_address_street": ${ contact[3].address.address }
+      - "Contact4_address_city": ${ contact[3].address.city }
+      - "Contact4_address_state": ${ contact[3].address.state }
+      - "Contact4_address_zip": ${ contact[3].address.zip }
+      
+      #- "Contact4_name": ${ Contact4_name }
+      #- "Contact4_relation": ${ Contact4_relation }
+      #- "Contact4_email": ${ Contact4_email }
+      #- "Contact4_phone_number": ${ Contact4_phone_number }
+      #- "Contact4_other_number": ${ Contact4_other_number }
+      #- "Contact4_Address_same": ${ Contact4_Address_same }
+      #- "Contact4_address_state": ${ Contact4_address_state }
+      #- "Contact4_address_street": ${ Contact4_address_street }
+      #- "Contact4_address_city": ${ Contact4_address_city }
+      #- "Contact4_address_zip": ${ Contact4_address_zip }
