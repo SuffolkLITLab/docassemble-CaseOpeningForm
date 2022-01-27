@@ -501,16 +501,13 @@ generic object: ALIndividual
 question: | 
   What is ${ contact[i].name.first}'s contact information 
 fields: 
-  - Other phone number: contact[i].phone_number
+  - "Phone number": contact[i].phone_number
     required: False
-  - "Contact phone number": contact[i].mobile_number 
+  - "Mobile number": contact[i].mobile_number 
     maxlength: 50
     required: False
   - "Contact email": contact[i].email 
     maxlength: 39
-    required: False
-  - Other ways to reach your client: contact[i].other_contact_method
-    input type: area
     required: False
 ---
 id: another contact 
@@ -966,11 +963,18 @@ progress: 100
 ---
 objects:
   - Post_interview_instructions: ALDocument.using(title="Instructions", filename="Case_Opening_Form_next_steps.docx", enabled=True, has_addendum=False)
-  - Case_Opening_Form_attachment: ALDocument.using(title="Case Opening Form", filename="Clinical_Programs_Case_Opening_Form_1.pdf", enabled=True, has_addendum=False)
+  - Case_Opening_Form_attachment: ALDocument.using(title="Case Opening Form", filename="Clinical_Programs_Case_Opening_Form_1.pdf", enabled=True, has_addendum=False) 
+  - addendum_attachment: ALDocument.using(title="Case Opening Form", filename="Clinical_Programs_Case_Opening_Form_1.pdf", enabled=True, has_addendum=False) 
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[Post_interview_instructions,Case_Opening_Form_attachment], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
-  - al_recipient_bundle: ALDocumentBundle.using(elements=[Case_Opening_Form_attachment], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
+  - al_user_bundle: ALDocumentBundle.using(elements=[Case_Opening_Form_attachment, addendum ], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
+  - al_recipient_bundle: ALDocumentBundle.using(elements=[Case_Opening_Form_attachment, addendum], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
+---
+code: |      
+  if contact.target_number > 4:
+    outputFile = pdf_concatenate(main, addendum, filename="final.pdf")
+  else:
+    outputFile = pdf_concatenate(main, filename="final.pdf")
 ---
 attachments:
   - name: Post interview instructions
@@ -1087,19 +1091,7 @@ attachments:
       - "Contact3_address_city": ${ contact[2].address.city }
       - "Contact3_address_state": ${ contact[2].address.state }
       - "Contact3_address_zip": ${ contact[2].address.zip }
-      
-      
-     #- "Contact3_name": ${ Contact3_name }
-     #- "Contact3_relation": ${ Contact3_relation }
-     #- "Contact3_email": ${ Contact3_email }
-     #- "Contact3_phone_number": ${ Contact3_phone_number }
-     #- "Contact3_other_number": ${ Contact3_other_number }
-     #- "Contact3_Address_same": ${ Contact3_Address_same }
-     #- "Contact3_address_city": ${ Contact3_address_city }
-     #- "Contact3_address_state": ${ Contact3_address_state }
-     #- "Contact3_address_zip": ${ Contact3_address_zip }
-     #- "Contact3_address_street": ${ Contact3_address_street }
-     
+
       - "Contact4_name": ${ contact[3].name }
       - "Contact4_relation": ${ contact[3].relationship}
       - "Contact4_email": ${ contact[3].email  }
@@ -1110,14 +1102,10 @@ attachments:
       - "Contact4_address_city": ${ contact[3].address.city }
       - "Contact4_address_state": ${ contact[3].address.state }
       - "Contact4_address_zip": ${ contact[3].address.zip }
-      
-      #- "Contact4_name": ${ Contact4_name }
-      #- "Contact4_relation": ${ Contact4_relation }
-      #- "Contact4_email": ${ Contact4_email }
-      #- "Contact4_phone_number": ${ Contact4_phone_number }
-      #- "Contact4_other_number": ${ Contact4_other_number }
-      #- "Contact4_Address_same": ${ Contact4_Address_same }
-      #- "Contact4_address_state": ${ Contact4_address_state }
-      #- "Contact4_address_street": ${ Contact4_address_street }
-      #- "Contact4_address_city": ${ Contact4_address_city }
-      #- "Contact4_address_zip": ${ Contact4_address_zip }
+
+---
+attachment:
+  - name: addendum
+    filename: addendum
+    variable name: addendum
+    docx template file: contacts_addendum.docx
