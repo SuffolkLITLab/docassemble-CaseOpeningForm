@@ -1,7 +1,6 @@
 include:
   - docassemble.AssemblyLine:al_package.yml
-  - docassemble.AssemblyLine:test_alexhibit.yml
-  - docassemble.CaseOpeningForm:custom_exhibit.yml
+  - review_screen.yml
 ---
 metadata:
   title: |
@@ -51,7 +50,7 @@ code: |
   github_repo_name =  'docassemble-CaseOpeningForm'
 ---
 code: |
-  interview_short_title = "Fill Out Clinical Programs Case Opening Form"
+  interview_short_title = "Fill Out the Clinical Programs Case Opening Form"
 ---
 code: |
   al_form_type = 'other_form'
@@ -62,6 +61,13 @@ objects:
   - parent: ALPeopleList.using(target_number=1,ask_number=True)
   - contacts: ALPeopleList.using(object_type=Individual, complete_attribute='complete')
   - other_parties: ALPeopleList.using(target_number=1,ask_number=True, complete_attribute='complete')
+  - exhibit_attachment: ALExhibitDocument.using(
+          title="Exhibits",
+          filename="exhibits",
+          add_page_numbers=True,
+          include_table_of_contents=False,
+          include_exhibit_cover_pages=False,
+        )
 ---
 sections:
   - review_Case_Opening_Form: Review your answers
@@ -89,16 +95,10 @@ code: |
   Court_Agency_Docket__number
   set_progress(50)
   other_parties.gather()
-    
   contacts.there_are_any
   contacts.gather()
   ConflictCheckComplete
-  thumbnails_defaults
-  download_list_defaults
-  thumbnails_custom
-  download_list_html_custom_1
-  download_list_html_custom_2
-  end_alexhibit_tests
+  exhibit_attachment.exhibits.gather()
   interview_order_Case_Opening_Form = True
 ---
 ###################### Main order ######################
@@ -125,6 +125,8 @@ question: |
   Case Opening Form
 subquestion: |
   Case Opening Form for Clinical Programs at Suffolk University Law School
+  
+  Fill out this interview for each case for your client. Each docket number requires its own form. 
 ---
 question: |
   How many student attorneys are assigned to this case?
@@ -219,7 +221,7 @@ fields:
 ---
 id: optional case information 
 question: | 
-  Court information
+  Provide the court information
 fields: 
   - "Docket number": Court_Agency_Docket__number
     maxlength: 96
@@ -495,7 +497,6 @@ code: |
   contacts[i].name.last
   contacts[i].relationship
   contacts_birthdate_logic
-  contacts[i].birthdate
   contacts[i].address.address
   contacts[i].mobile_number
   contacts[i].complete = True
@@ -524,7 +525,6 @@ fields:
     required: False
 ---
 id: birthdate question
-generic object: ALIndividual
 question: |
   When was ${ contacts[i].name } born?
 fields:
@@ -538,7 +538,7 @@ fields:
 id: contacts bday idk 
 code: | 
   if contacts_birthday_unknown == True: 
-    contacts[i].birthdate = "01//"
+    contacts[i].birthdate = "01/01/01"
   contacts_birthdate_logic = True
 ---
 id: another contact 
@@ -553,6 +553,8 @@ yesno: contacts[i].there_is_another
 id: Conflict Information
 question: |
   Conflict Information
+subquestion: | 
+  You will have an opportunity to share your conflict check results next 
 fields:
   - "Conflict check complete": ConflictCheckComplete
     datatype: yesnowide
@@ -587,391 +589,7 @@ continue button field: Case_Opening_Form_preview_question
 code: |
   signature_fields = []
 ---
-id: Case Opening Form review screen
-event: review_Case_Opening_Form
-question: |
-  Review your answers
-review:
-  - Edit: Today_date
-    button: |
-      **Date of Today**:
-      ${ Today_date }
-  - Edit: Supervisor_name
-    button: |
-      **Supervisor Name**:
-      ${ Supervisor_name }
-  - Edit: Clinic_Practice_Area
-    button: |
-      **Clinic Practice Area**:
-      ${ Clinic_Practice_Area }
-  - Edit: Student_Atty_name
-    button: |
-      **Student Attorney Name(s)**:
-      ${ studentattorney[0].name }
-  - Edit: ConflictCheckResultsAttached
-    button: |
-      **Conflict check results attached**:
-      ${ word(yesno(ConflictCheckResultsAttached)) }
-  - Edit: ConflictCheckComplete
-    button: |
-      **Conflict check complete**:
-      ${ word(yesno(ConflictCheckComplete)) }
-  - Edit: Date_ConflictCheck
-    button: |
-      **Date of conflict check**:
-      ${ Date_ConflictCheck }
-  - Edit: Description_Conflict
-    button: |
-      **Description of conflict check**:
-      > ${ single_paragraph(Description_Conflict) }
-  - Edit: Case_Description
-    button: |
-      **Case description**:
-      ${ Case_Description }
-  - Edit: Judge_name
-    button: |
-      **Judge name**:
-      ${ Judge_name }
-  - Edit: Court_Agency
-    button: |
-      **Court or Agency name**:
-      ${ Court_Agency }
-  - Edit: Court_Agency_Docket__number
-    button: |
-      **Court or Agency docket  number**:
-      ${ Court_Agency_Docket__number }
-  - Edit: Referral_Source
-    button: |
-      **Referral source**:
-      ${ Referral_Source }
-  - Edit: Scope_Of_Representation
-    button: |
-      **Scope of representation**:
-      ${ Scope_Of_Representation }
-  - Edit: Case_Type
-    button: |
-      **Case type**:
-      ${ Case_Type }
-  - Edit: Case__synopsis
-    button: |
-      **Case  synopsis**:
-      > ${ single_paragraph(Case__synopsis) }
-  - Edit: client_birthdate
-    button: |
-      **Client birthdate**:
-      ${ client_birthdate }
-  - Edit: Client_gender
-    button: |
-      **Client gender**:
-      ${ Client_gender }
-  - Edit: Client_Name
-    button: |
-      **Client name**:
-      ${ Client_Name }
-  - Edit: Client_Company
-    button: |
-      **Client company**:
-      ${ Client_Company }
-  - Edit: Client_title
-    button: |
-      **Client title**:
-      ${ Client_title }
-  - Edit: Client_MaritalStatus
-    button: |
-      **Client marital status**:
-      ${ Client_MaritalStatus }
-  - Edit: Client_Aliases
-    button: |
-      **Client aliases**:
-      ${ Client_Aliases }
-  - Edit: Client_address_street
-    button: |
-      **Client address street**:
-      ${ Client_address_street }
-  - Edit: Client_address_city
-    button: |
-      **Client address city**:
-      ${ Client_address_city }
-  - Edit: Client_Public_Housing
-    button: |
-      **public housing status**:
-      ${ Client_Public_Housing }
-  - Edit: Client_address_zip
-    button: |
-      **Client address zip**:
-      ${ Client_address_zip }
-  - Edit: client_phone_number
-    button: |
-      **Client phone number**:
-      ${ client_phone_number }
-  - Edit: client_other1_number
-    button: |
-      **Client alternative number**:
-      ${ client_other1_number }
-  - Edit: client_other2_number
-    button: |
-      **Client other alternative number**:
-      ${ client_other2_number }
-  - Edit: Client_Interpreter
-    button: |
-      **Client interpreter**:
-      ${ Client_Interpreter }
-  - Edit: Client_Primary_Languages
-    button: |
-      **Client primary languages**:
-      ${ Client_Primary_Languages }
-  - Edit: Client_Race
-    button: |
-      **Client race**:
-      ${ Client_Race }
-  - Edit: Client_Imm_Status
-    button: |
-      **Client immigration status**:
-      ${ Client_Imm_Status }
-  - Edit: Client_email
-    button: |
-      **Client email**:
-      > ${ single_paragraph(Client_email) }
-  - Edit: Client_Income
-    button: |
-      **Client income**:
-      ${ Client_Income }
-  - Edit: Client_Source_Income
-    button: |
-      **Client source of income**:
-      ${ Client_Source_Income }
-  - Edit: Client_NumberOfDependents
-    button: |
-      **Client number of dependents**:
-      ${ Client_NumberOfDependents }
-  - Edit: Client_Number_Household
-    button: |
-      **Client number household**:
-      ${ Client_Number_Household }
-  - Edit: Client_Notes
-    button: |
-      **Client notes**:
-      > ${ single_paragraph(Client_Notes) }
-  - Edit: opp_DateOfBirth
-    button: |
-      **Opposition date of birth**:
-      ${ opp_DateOfBirth }
-  - Edit: opp_name
-    button: |
-      **Opposition name**:
-      ${ opp_name }
-  - Edit: opp_GenderExpression
-    button: |
-      **Opposition gender**:
-      ${ opp_GenderExpression }
-  - Edit: opp_title
-    button: |
-      **Opposition title**:
-      ${ opp_title }
-  - Edit: opp_company
-    button: |
-      **Opposition company**:
-      ${ opp_company }
-  - Edit: opp_Aliases_names
-    button: |
-      **Opposition aliases**:
-      > ${ single_paragraph(opp_Aliases_names) }
-  - Edit: opp_address_city
-    button: |
-      **Opposition address city**:
-      ${ opp_address_city }
-  - Edit: opp_address_zip
-    button: |
-      **Opposition address zip**:
-      ${ opp_address_zip }
-  - Edit: opp_address_street
-    button: |
-      **Opposition address street**:
-      ${ opp_address_street }
-  - Edit: opp_alt1_number
-    button: |
-      **Opposition alternative number**:
-      ${ opp_alt1_number }
-  - Edit: opp_alt2_number
-    button: |
-      **Opposition other alternative number**:
-      ${ opp_alt2_number }
-  - Edit: opp_phone_number
-    button: |
-      **Opposition phone number**:
-      ${ opp_phone_number }
-  - Edit: Opp_Interpreter
-    button: |
-      **Opposition interpreter**:
-      ${ Opp_Interpreter }
-  - Edit: opp_PrimaryLanguages
-    button: |
-      **Opposition primarylanguages**:
-      ${ opp_PrimaryLanguages }
-  - Edit: opp_email
-    button: |
-      **Opposition email**:
-      ${ opp_email }
-  - Edit: opp_Notes
-    button: |
-      **Opposition notes**:
-      > ${ single_paragraph(opp_Notes) }
-  - Edit: Contact1_relation
-    button: |
-      **Contact1 relation**:
-      ${ Contact1_relation }
-  - Edit: Contact1_name
-    button: |
-      **Contact1 name**:
-      ${ Contact1_name }
-  - Edit: Contact1_email
-    button: |
-      **Contact1 email**:
-      ${ Contact1_email }
-  - Edit: contant[i].mobile_number
-    button: |
-      **Contact1 phone number**:
-      ${ contant[i].mobile_number }
-  - Edit: Contact1_Address_same
-    button: |
-      **Contact1 address same**:
-      ${ word(yesno(Contact1_Address_same)) }
-  - Edit: Contact1_address_city
-    button: |
-      **Contact1 address city**:
-      ${ Contact1_address_city }
-  - Edit: Contact1_address_state
-    button: |
-      **Contact1 address state**:
-      ${ Contact1_address_state }
-  - Edit: Contact1_address_street
-    button: |
-      **Contact1 address street**:
-      ${ Contact1_address_street }
-  - Edit: Contact1_address_zip
-    button: |
-      **Contact1 address zip**:
-      ${ Contact1_address_zip }
-  - Edit: Contact2_name
-    button: |
-      **Contact2 name**:
-      ${ Contact2_name }
-  - Edit: Contact2_relation
-    button: |
-      **Contact2 relation**:
-      ${ Contact2_relation }
-  - Edit: Contact2_email
-    button: |
-      **Contact2 email**:
-      ${ Contact2_email }
-  - Edit: Contact2_phone_number
-    button: |
-      **Contact2 phone number**:
-      ${ Contact2_phone_number }
-  - Edit: Contact2_other_number
-    button: |
-      **Contact2 other number**:
-      ${ Contact2_other_number }
-  - Edit: Contact2_Address_same
-    button: |
-      **Contact2 address same**:
-      ${ word(yesno(Contact2_Address_same)) }
-  - Edit: Contact2_address_street
-    button: |
-      **Contact2 address street**:
-      ${ Contact2_address_street }
-  - Edit: Contact2_address_city
-    button: |
-      **Contact2 address city**:
-      ${ Contact2_address_city }
-  - Edit: Contact2_address_state
-    button: |
-      **Contact2 address state**:
-      ${ Contact2_address_state }
-  - Edit: Contact2_address_zip
-    button: |
-      **Contact2 address zip**:
-      ${ Contact2_address_zip }
-  - Edit: Contact3_name
-    button: |
-      **Contact3 name**:
-      ${ Contact3_name }
-  - Edit: Contact3_relation
-    button: |
-      **Contact3 relation**:
-      ${ Contact3_relation }
-  - Edit: Contact3_email
-    button: |
-      **Contact3 email**:
-      ${ Contact3_email }
-  - Edit: Contact3_phone_number
-    button: |
-      **Contact3 phone number**:
-      ${ Contact3_phone_number }
-  - Edit: Contact3_other_number
-    button: |
-      **Contact3 other number**:
-      ${ Contact3_other_number }
-  - Edit: Contact3_Address_same
-    button: |
-      **Contact3 address same**:
-      ${ word(yesno(Contact3_Address_same)) }
-  - Edit: Contact3_address_city
-    button: |
-      **Contact3 address city**:
-      ${ Contact3_address_city }
-  - Edit: Contact3_address_state
-    button: |
-      **Contact3 address state**:
-      ${ Contact3_address_state }
-  - Edit: Contact3_address_zip
-    button: |
-      **Contact3 address zip**:
-      ${ Contact3_address_zip }
-  - Edit: Contact3_address_street
-    button: |
-      **Contact3 address street**:
-      ${ Contact3_address_street }
-  - Edit: Contact4_name
-    button: |
-      **Contact4 name**:
-      ${ Contact4_name }
-  - Edit: Contact4_relation
-    button: |
-      **Contact4 relation**:
-      ${ Contact4_relation }
-  - Edit: Contact4_email
-    button: |
-      **Contact4 email**:
-      ${ Contact4_email }
-  - Edit: Contact4_phone_number
-    button: |
-      **Contact4 phone number**:
-      ${ Contact4_phone_number }
-  - Edit: Contact4_other_number
-    button: |
-      **Contact4 other number**:
-      ${ Contact4_other_number }
-  - Edit: Contact4_Address_same
-    button: |
-      **Contact4 address same**:
-      ${ word(yesno(Contact4_Address_same)) }
-  - Edit: Contact4_address_state
-    button: |
-      **Contact4 address state**:
-      ${ Contact4_address_state }
-  - Edit: Contact4_address_street
-    button: |
-      **Contact4 address street**:
-      ${ Contact4_address_street }
-  - Edit: Contact4_address_city
-    button: |
-      **Contact4 address city**:
-      ${ Contact4_address_city }
-  - Edit: Contact4_address_zip
-    button: |
-      **Contact4 address zip**:
-      ${ Contact4_address_zip }
+
 ---
 id: download Case_Opening_Form
 event: Case_Opening_Form_download
@@ -997,8 +615,8 @@ objects:
   - Case_Opening_Form_attachment: ALDocument.using(title="Case Opening Form", filename="Clinical_Programs_Case_Opening_Form_1.pdf", enabled=True, has_addendum=True) 
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[Case_Opening_Form_attachment ], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
-  - al_recipient_bundle: ALDocumentBundle.using(elements=[Case_Opening_Form_attachment], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
+  - al_user_bundle: ALDocumentBundle.using(elements=[Case_Opening_Form_attachment, exhibit_attachment ], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
+  - al_recipient_bundle: ALDocumentBundle.using(elements=[Case_Opening_Form_attachment, exhibit_attachment], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
 ---
 attachments:
   - name: Post interview instructions
@@ -1017,7 +635,7 @@ attachments:
       - "Student_Atty_name": ${ studentattorney }
       - "ConflictCheckResultsAttached": ${ ConflictCheckResultsAttached }
       - "ConflictCheckComplete": ${ ConflictCheckComplete }
-      - "Date_ConflictCheck": ${ Date_ConflictCheck}
+      - "Date_ConflictCheck": ${ Date_ConflictCheck.format_date('MM/dd/YYYY')}
       - "Description_Conflict": ${ Description_Conflict }
       
       - "Case_Description": ${ Case_Description }
@@ -1085,8 +703,8 @@ attachments:
       - "opp_Notes": ${ opp_Notes }
       
       - "Contact1_relation": ${ contacts[0].relationship }
-      - "Contact1_name": ${ contact[0].name }
-      - "Contact1_email": ${ contact[0].email }
+      - "Contact1_name": ${ contacts[0].name.full() }
+      - "Contact1_email": ${ contacts[0].email }
       - "Contact1_phone_number": ${ contacts[0].phone_numbers() }
       - "Contact1_Address_same": ${ Contact1_Address_same }
       - "Contact1_address_line_two": ${ contacts[0].address.line_two() }
@@ -1094,8 +712,8 @@ attachments:
       - "Contact1_address_zip": ${ contacts[0].address.zip }
 
       
-      - "Contact2_name": ${ contacts[1].name }
-      - "Contact2_relation": ${ contact[1].relationship}
+      - "Contact2_name": ${ contacts[1].name.full() }
+      - "Contact2_relation": ${ contacts[1].relationship}
       - "Contact2_email": ${ contacts[1].email  }
       - "Contact2_phone_number": ${ contacts[1].phone_number }
       - "Contact2_other_number": ${ contacts[1].mobile_number }
@@ -1105,8 +723,8 @@ attachments:
       - "Contact2_address_state": ${ contacts[1].address.state }
       - "Contact2_address_zip": ${ contacts[1].address.zip }
       
-      - "Contact3_name": ${ contacts[2].name }
-      - "Contact3_relation": ${ contact[2].relationship}
+      - "Contact3_name": ${ contacts[2].name.full() }
+      - "Contact3_relation": ${ contacts[2].relationship}
       - "Contact3_email": ${ contacts[2].email  }
       - "Contact3_phone_number": ${ contacts[2].phone_number }
       - "Contact3_other_number": ${ contacts[2].mobile_number }
@@ -1116,9 +734,9 @@ attachments:
       - "Contact3_address_state": ${ contacts[2].address.state }
       - "Contact3_address_zip": ${ contacts[2].address.zip }
 
-      - "Contact4_name": ${ contacts[3].name }
-      - "Contact4_relation": ${ contact[3].relationship}
-      - "Contact4_email": ${ contact[3].email  }
+      - "Contact4_name": ${ contacts[3].name.full() }
+      - "Contact4_relation": ${ contacts[3].relationship}
+      - "Contact4_email": ${ contacts[3].email  }
       - "Contact4_phone_number": ${ contacts[3].phone_number }
       - "Contact4_other_number": ${ contacts[3].mobile_number }
       - "Contact4_Address_same": ${ Contact3_Address_same }
@@ -1126,7 +744,6 @@ attachments:
       - "Contact4_address_city": ${ contacts[3].address.city }
       - "Contact4_address_state": ${ contacts[3].address.state }
       - "Contact4_address_zip": ${ contacts[3].address.zip }
-
 ---
 attachment:
   - name: addendum
@@ -1137,3 +754,100 @@ attachment:
 code: |
   Case_Opening_Form_attachment.overflow_fields['contacts'].overflow_trigger = 4 
   Case_Opening_Form_attachment.overflow_fields.gathered = True
+---
+mandatory: True
+code: |
+  exhibit_attachment.exhibits.auto_labeler = lambda y: str(y+1)
+---
+generic object: ALExhibitList
+id: any exhibits
+question: |
+  % if al_form_type in ['starts_case','existing_case','appeal']:
+  Do you have any documents that you want to provide to the court?
+  % else:
+  Do you have any documents that you want to attach to this form?
+  % endif
+subquestion: | 
+  Incldue screenshots from the conflict or any additional opening forms
+fields:
+  - Do you have any documents you want to upload?: x.has_exhibits
+    datatype: yesnoradio
+  - note: |
+      **Okay**. You will have a chance to upload multiple documents. 
+      You can also add additional pages to this document.
+    show if: x.has_exhibits
+  - First document title: x[0].title
+    maxlength: 60 # longer might break TOC
+    show if: x.has_exhibits    
+  - Upload the first document: x[0].pages
+    show if: x.has_exhibits    
+    datatype: files
+    maximum image size: 1024
+    image upload type: jpeg        
+    accept: |
+      "image/png, image/jpeg, .doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,.pdf"   
+validation code: |
+  if x.has_exhibits:
+    if sum(exhibit.size_in_bytes() for exhibit in x[0].pages) > (15 * 1024 * 1024):
+      validation_error("Upload a file smaller than 15 MB.")
+    try:
+      pdf_concatenate(x[0].pages)
+    except:
+      validation_error("Unable to convert this file. Please upload a new one.", field="x[0].pages")
+    x[0].pages.reset_gathered()  # docassemble sets this attribute but we want to force gathering additional pages
+---
+id: basic questions intro screen
+decoration: form-lineal
+question: |
+  ${interview_short_title}: ${ AL_ORGANIZATION_TITLE}
+subquestion: |
+  % if form_approved_for_email_filing:
+  The ${ AL_ORGANIZATION_TITLE } Project can help you complete and file court forms in 3 steps:
+  % else:
+  The ${ AL_ORGANIZATION_TITLE } Project can help you complete and download forms in 3 steps:
+  % endif
+  
+  Step 1. Answer questions that will fill in your form for you.  
+  Step 2. Preview the completed form.  
+  % if form_approved_for_email_filing:  
+  Step 3. Email the form to the court using this secure website and save copies
+  for yourself for later reference.  
+  % elif al_form_type in ['starts_case','existing_case','appeal']:
+  Step 3. Download and print the final form. You will need to deliver it
+  to the court on your own.
+  % else:
+  Step 3. Download and print the final form. You will need to deliver it 
+  on your own.
+  % endif
+  
+  This site is not a lawyer. If you would like a lawyer, find [your local
+  legal aid provider](https://www.lsc.gov/what-legal-aid/find-legal-aid).
+  
+  Tap the {green words} in any screen for a definition or more information.
+  
+  % if chat_partners_available().help:
+  Live help is currently available in this interview. Click the speech bubble
+  (:comment-alt:) in the navigation bar to connect to a live advocate for help.
+  % endif
+fields:
+  - To continue, you must accept our [terms of use](${ AL_ORGANIZATION_HOMEPAGE }/privacy/): acknowledged_information_use
+    datatype: checkboxes
+    none of the above: False    
+    minlength: 1
+    choices:
+      - I accept the terms of use.
+    validation messages:
+      minlength: |
+        You cannot continue unless you agree to the terms of use.        
+continue button field: al_intro_screen
+terms:
+  green words: |
+    Green words are legal terms or a short way of referring to something that needs more explanation. The definition or explanation pops up when you tap the green words.
+right: |
+  % if user_has_saved_answers:
+  ${fa_icon("bell", color="primary", size="sm")}
+  Saved answers available!  
+  
+  ${action_button_html(url_action('load_answer'), icon="folder-open", label=word("View answers"), size="sm" )}
+  % endif    
+
