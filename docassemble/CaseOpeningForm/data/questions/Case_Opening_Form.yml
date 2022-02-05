@@ -1,5 +1,7 @@
 include:
   - docassemble.AssemblyLine:al_package.yml
+  - docassemble.AssemblyLine:test_alexhibit.yml
+  - docassemble.CaseOpeningForm:custom_exhibit.yml
 ---
 metadata:
   title: |
@@ -91,6 +93,12 @@ code: |
   contacts.there_are_any
   contacts.gather()
   ConflictCheckComplete
+  thumbnails_defaults
+  download_list_defaults
+  thumbnails_custom
+  download_list_html_custom_1
+  download_list_html_custom_2
+  end_alexhibit_tests
   interview_order_Case_Opening_Form = True
 ---
 ###################### Main order ######################
