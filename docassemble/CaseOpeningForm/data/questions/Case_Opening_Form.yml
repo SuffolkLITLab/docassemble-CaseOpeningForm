@@ -58,7 +58,7 @@ objects:
   - studentattorney: ALPeopleList.using(ask_number=True, complete_attribute='complete')
   - client: ALPeopleList.using(target_number=1,ask_number=True, complete_attribute='complete')
   - parent: ALPeopleList.using(target_number=1,ask_number=True)
-  - contact: ALPeopleList.using(object_type=Individual, complete_attribute='complete')
+  - contacts: ALPeopleList.using(object_type=Individual, complete_attribute='complete')
   - other_parties: ALPeopleList.using(target_number=1,ask_number=True, complete_attribute='complete')
 ---
 sections:
@@ -80,7 +80,6 @@ code: |
   users.there_is_another = False
   Clinic_Practice_Area
   client.gather()
-
   client_optional_info
   Client_Source_Income
   set_progress(25)
@@ -89,8 +88,8 @@ code: |
   set_progress(50)
   other_parties.gather()
     
-  contact.there_are_any
-  contact.gather()
+  contacts.there_are_any
+  contacts.gather()
   ConflictCheckComplete
   interview_order_Case_Opening_Form = True
 ---
@@ -193,10 +192,10 @@ question: |
 fields:
   - "Case description": Case_Description
     maxlength: 42
-    hint: e.g., Representing defendant in drug court.
+    hint: e.g. Representing defendant in drug court
   - "Case type": Case_Type
     maxlength: 90
-    required: False
+    hint: e.g. Delinquency 
   - "Case  synopsis": Case__synopsis
     input type: area
     maxlength: 910
@@ -212,7 +211,7 @@ fields:
 ---
 id: optional case information 
 question: | 
-  Case information
+  Court information
 fields: 
   - "Docket number": Court_Agency_Docket__number
     maxlength: 96
@@ -223,17 +222,28 @@ fields:
   - "Court or Agency name": Court_Agency
     maxlength: 42
     required: False
+    hint: e.g. Boston Municipal Court  
 ---
 id: client gather 
 code: |
   client[i].name.first
   client[i].name.last
   client[i].birthdate
+  unhoused_logic
   client[i].address.address
   client[i].mobile_number
   client[i].primary_language
   client[i].immigration_status
   client[i].complete = True
+---
+id: unhoused client logic 
+code: | 
+  if unhoused_client == True:
+    client[i].address.address = 'Client is homeless'
+    client[i].address.city = ' '
+    client[i].address.state = ' ' 
+    client[i].address.zip = ' '
+  unhoused_logic = True 
 ---
 id: Client Basic Information
 generic object: ALPeopleList
@@ -241,14 +251,18 @@ sets:
   - client[i].name.first
   - client[i].name.last
 question: |
-  What is your client's name?
+  Tell us about your client
+subquestion: | 
+  If your client is a company, use the name fields to provide the main contact
 fields:
   - code: |
       client[i].name_fields()
   - "Company": Client_Company 
     required: False 
-  - "Title": Client_Title
+    hint: e.g. Alphabet Inc.
+  - "Title/Role": Client_Title
     required: False
+    hint: e.g. CEO, Main contact 
   - "Aliases or other names": Client_Aliases
     maxlength: 80
     required: False
@@ -258,15 +272,12 @@ fields:
     required: False
 ---
 id: additional client info
-sets: 
-  - client[i].birthdate
 question: | 
   Demographic information about ${client[i].name.first}
 subquestion: |
   If the information is unknown or not applicable that is okay.
 fields: 
   - "Birthdate": client[i].birthdate
-    required: False
     datatype: birthdate
     maxlength: 12
   - "Gender expression": Client_gender
@@ -299,7 +310,7 @@ fields:
     required: False
 ---
 generic object: ALIndividual
-id: client  address
+id: client address
 sets:
   - client[i].address.address
   - client[i].address.city
@@ -315,13 +326,6 @@ fields:
   - code: |
       client[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
 ---
-code: | 
-if unhoused_client:
-  client[i].address.address = ' '
-  client[i].address.city = ' '
-  client[i].address.state = ' ' 
-  client[i].address.zip = ' '  
----
 id: client language questions 
 generic object: ALIndividual
 sets: 
@@ -336,6 +340,7 @@ fields:
     required: False
   - "Immigration status": client[i].immigration_status
     required: False
+    hint: e.g. US Citizen, Work Visa, Undocumented
 ---
 id: Client Background Information
 question: |
@@ -395,7 +400,6 @@ id: other party gather
 code: |
   other_parties[i].name
   other_parties[i].address.address
-  other_parties[i].birthdate
   other_parties[i].mobile_number
   other_parties[i].primary_language
   other_parties[i].complete = True
@@ -405,31 +409,31 @@ sets:
   - other_parties[i].name.last
   - other_parties[i].name.middle
   - other_parties[i].name.suffix
-  - other_parties[i].birthdate
 id: opposition information
 question: |
   Information about the other side
+subquestion: | 
+  If the Commonwealth is the opposing party provide the District Attorney's information  
 fields:
-  - "The Commonwealth is the opposing party": opp_is_state 
-    datatype: yesno
-    disable others: True
   - code: |
       other_parties[i].name_fields()
   - "Company": Opp_Company
     required: False
-  - "Title": opp_title
+    hint: e.g. Alphabet, Inc., Suffolk DA 
+  - "Title/Role": opp_title
     required: False
+    hint: CEO, ADA
   - "Aliases or other names": opp_Aliases_names
     maxlength: 180
     required: False
+  - "Date of birth": other_parties[i].birthdate
+    datatype: birthdate
+    required: False
+    maxlength: 11
   - "Gender expression": opp_GenderExpression
     maxlength: 66
     required: False
-  - "Date of birth": other_parties[i].birthdate
-    datatype: birthdate
-    maxlength: 11
-    required: False
-  - "Notes about Opposition": opp_Notes
+  - "Notes about the opposition": opp_Notes
     input type: area
     maxlength: 270
     required: False
@@ -479,45 +483,64 @@ yesno: contact.there_are_any
 ---
 id: contacts gather
 code: |
-  contact[i].name.first
-  contact[i].name.last
-  contact[i].relationship
-  contact[i].birthdate
-  contact[i].address.address
-  contact[i].mobile_number
-  contact[i].complete = True
+  contacts[i].name.first
+  contacts[i].name.last
+  contacts[i].relationship
+  contacts_birthdate_logic
+  contacts[i].birthdate
+  contacts[i].address.address
+  contacts[i].mobile_number
+  contacts[i].complete = True
 ---
 id: contact relationship
 generic object: ALIndividual
 question: |
-  What is ${ contact[i].name.first}'s relationship to the case?
+  What is ${ contacts[i].name.first}'s relationship to the case?
 fields:
-  - no label: contact[i].relationship
+  - no label: contacts[i].relationship
     maxlength: 50
     hint: e.g Witness, alleged victim, parent
 ---
 id: contacts contact info
 generic object: ALIndividual
 question: | 
-  What is ${ contact[i].name.first}'s contact information 
+  What is ${ contacts[i].name.first}'s contact information 
 fields: 
-  - "Phone number": contact[i].phone_number
+  - "Phone number": contacts[i].phone_number
     required: False
-  - "Mobile number": contact[i].mobile_number 
+  - "Mobile number": contacts[i].mobile_number 
     maxlength: 50
     required: False
-  - "Contact email": contact[i].email 
+  - "Contact email": contacts[i].email 
     maxlength: 39
     required: False
+---
+id: birthdate question
+generic object: ALIndividual
+question: |
+  When was ${ contacts[i].name } born?
+fields:
+  - Birthday unknown: contacts_birthday_unknown
+    datatype: yesnowide
+    disable others: True
+  - Birthdate: contacts[i].birthdate
+    datatype: BirthDate
+    required: False
+---
+id: contacts bday idk 
+code: | 
+  if contacts_birthday_unknown == True: 
+    contacts[i].birthdate = "01//"
+  contacts_birthdate_logic = True
 ---
 id: another contact 
 question: |
   Do you have another contact to add to the case?
 subquestion: |
-  % if len(contact.elements) > 0:  
-  So far you have told us about ${comma_and_list(contact.complete_elements())}.
+  % if len(contacts.elements) > 0:  
+  So far you have told us about ${comma_and_list(contacts.complete_elements())}.
   % endif
-yesno: contact[i].there_is_another 
+yesno: contacts[i].there_is_another 
 ---
 id: Conflict Information
 question: |
@@ -963,18 +986,11 @@ progress: 100
 ---
 objects:
   - Post_interview_instructions: ALDocument.using(title="Instructions", filename="Case_Opening_Form_next_steps.docx", enabled=True, has_addendum=False)
-  - Case_Opening_Form_attachment: ALDocument.using(title="Case Opening Form", filename="Clinical_Programs_Case_Opening_Form_1.pdf", enabled=True, has_addendum=False) 
-  - addendum_attachment: ALDocument.using(title="Case Opening Form", filename="Clinical_Programs_Case_Opening_Form_1.pdf", enabled=True, has_addendum=False) 
+  - Case_Opening_Form_attachment: ALDocument.using(title="Case Opening Form", filename="Clinical_Programs_Case_Opening_Form_1.pdf", enabled=True, has_addendum=True) 
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[Case_Opening_Form_attachment, addendum ], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
-  - al_recipient_bundle: ALDocumentBundle.using(elements=[Case_Opening_Form_attachment, addendum], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
----
-code: |      
-  if contact.target_number > 4:
-    outputFile = pdf_concatenate(main, addendum, filename="final.pdf")
-  else:
-    outputFile = pdf_concatenate(main, filename="final.pdf")
+  - al_user_bundle: ALDocumentBundle.using(elements=[Case_Opening_Form_attachment ], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
+  - al_recipient_bundle: ALDocumentBundle.using(elements=[Case_Opening_Form_attachment], filename="Case_Opening_Form_package.pdf", title="All forms to download for your records", enabled=True)
 ---
 attachments:
   - name: Post interview instructions
@@ -1060,52 +1076,56 @@ attachments:
       - "opp_email": ${ other_parties[0].email }
       - "opp_Notes": ${ opp_Notes }
       
-      - "Contact1_relation": ${ contact[0].relationship }
+      - "Contact1_relation": ${ contacts[0].relationship }
       - "Contact1_name": ${ contact[0].name }
       - "Contact1_email": ${ contact[0].email }
-      - "Contact1_phone_number": ${ contact[0].phone_numbers() }
+      - "Contact1_phone_number": ${ contacts[0].phone_numbers() }
       - "Contact1_Address_same": ${ Contact1_Address_same }
-      - "Contact1_address_line_two": ${ contact[0].address.line_two() }
-      - "Contact1_address_street": ${ contact[0].address.line_one() }
-      - "Contact1_address_zip": ${ contact[0].address.zip }
+      - "Contact1_address_line_two": ${ contacts[0].address.line_two() }
+      - "Contact1_address_street": ${ contacts[0].address.line_one() }
+      - "Contact1_address_zip": ${ contacts[0].address.zip }
 
       
-      - "Contact2_name": ${ contact[1].name }
+      - "Contact2_name": ${ contacts[1].name }
       - "Contact2_relation": ${ contact[1].relationship}
-      - "Contact2_email": ${ contact[1].email  }
-      - "Contact2_phone_number": ${ contact[1].phone_number }
-      - "Contact2_other_number": ${ contact[1].mobile_number }
+      - "Contact2_email": ${ contacts[1].email  }
+      - "Contact2_phone_number": ${ contacts[1].phone_number }
+      - "Contact2_other_number": ${ contacts[1].mobile_number }
       - "Contact2_Address_same": ${ Contact2_Address_same }
-      - "Contact2_address_street": ${ contact[1].address.address }
-      - "Contact2_address_city": ${ contact[1].address.city }
-      - "Contact2_address_state": ${ contact[1].address.state }
-      - "Contact2_address_zip": ${ contact[1].address.zip }
+      - "Contact2_address_street": ${ contacts[1].address.address }
+      - "Contact2_address_city": ${ contacts[1].address.city }
+      - "Contact2_address_state": ${ contacts[1].address.state }
+      - "Contact2_address_zip": ${ contacts[1].address.zip }
       
-      - "Contact3_name": ${ contact[2].name }
+      - "Contact3_name": ${ contacts[2].name }
       - "Contact3_relation": ${ contact[2].relationship}
-      - "Contact3_email": ${ contact[2].email  }
-      - "Contact3_phone_number": ${ contact[2].phone_number }
-      - "Contact3_other_number": ${ contact[2].mobile_number }
+      - "Contact3_email": ${ contacts[2].email  }
+      - "Contact3_phone_number": ${ contacts[2].phone_number }
+      - "Contact3_other_number": ${ contacts[2].mobile_number }
       - "Contact3_Address_same": ${ Contact3_Address_same }
-      - "Contact3_address_street": ${ contact[2].address.address }
-      - "Contact3_address_city": ${ contact[2].address.city }
-      - "Contact3_address_state": ${ contact[2].address.state }
-      - "Contact3_address_zip": ${ contact[2].address.zip }
+      - "Contact3_address_street": ${ contacts[2].address.address }
+      - "Contact3_address_city": ${ contacts[2].address.city }
+      - "Contact3_address_state": ${ contacts[2].address.state }
+      - "Contact3_address_zip": ${ contacts[2].address.zip }
 
-      - "Contact4_name": ${ contact[3].name }
+      - "Contact4_name": ${ contacts[3].name }
       - "Contact4_relation": ${ contact[3].relationship}
       - "Contact4_email": ${ contact[3].email  }
-      - "Contact4_phone_number": ${ contact[3].phone_number }
-      - "Contact4_other_number": ${ contact[3].mobile_number }
+      - "Contact4_phone_number": ${ contacts[3].phone_number }
+      - "Contact4_other_number": ${ contacts[3].mobile_number }
       - "Contact4_Address_same": ${ Contact3_Address_same }
-      - "Contact4_address_street": ${ contact[3].address.address }
-      - "Contact4_address_city": ${ contact[3].address.city }
-      - "Contact4_address_state": ${ contact[3].address.state }
-      - "Contact4_address_zip": ${ contact[3].address.zip }
+      - "Contact4_address_street": ${ contacts[3].address.address }
+      - "Contact4_address_city": ${ contacts[3].address.city }
+      - "Contact4_address_state": ${ contacts[3].address.state }
+      - "Contact4_address_zip": ${ contacts[3].address.zip }
 
 ---
 attachment:
   - name: addendum
     filename: addendum
-    variable name: addendum
+    variable name: Case_Opening_Form_attachment.addendum
     docx template file: contacts_addendum.docx
+---
+code: |
+  Case_Opening_Form_attachment.overflow_fields['contacts'].overflow_trigger = 4 
+  Case_Opening_Form_attachment.overflow_fields.gathered = True
