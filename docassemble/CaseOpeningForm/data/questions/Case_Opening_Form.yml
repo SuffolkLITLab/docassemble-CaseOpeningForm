@@ -496,7 +496,6 @@ code: |
   contacts[i].name.first
   contacts[i].name.last
   contacts[i].relationship
-  contacts_birthdate_logic
   contacts[i].address.address
   contacts[i].mobile_number
   contacts[i].complete = True
@@ -523,23 +522,6 @@ fields:
   - "Contact email": contacts[i].email 
     maxlength: 39
     required: False
----
-id: birthdate question
-question: |
-  When was ${ contacts[i].name } born?
-fields:
-  - Birthday unknown: contacts_birthday_unknown
-    datatype: yesnowide
-    disable others: True
-  - Birthdate: contacts[i].birthdate
-    datatype: BirthDate
-    required: False
----
-id: contacts bday idk 
-code: | 
-  if contacts_birthday_unknown == True: 
-    contacts[i].birthdate = "01/01/01"
-  contacts_birthdate_logic = True
 ---
 id: another contact 
 question: |
@@ -588,8 +570,6 @@ continue button field: Case_Opening_Form_preview_question
 ---
 code: |
   signature_fields = []
----
-
 ---
 id: download Case_Opening_Form
 event: Case_Opening_Form_download
