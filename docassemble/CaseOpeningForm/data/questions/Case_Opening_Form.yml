@@ -1,6 +1,7 @@
 include:
   - docassemble.AssemblyLine:al_package.yml
   - review_screen.yml
+  - case_type_dropdown.yml
 ---
 metadata:
   title: |
@@ -61,6 +62,7 @@ objects:
   - parent: ALPeopleList.using(target_number=1,ask_number=True)
   - contacts: ALPeopleList.using(object_type=Individual, complete_attribute='complete')
   - other_parties: ALPeopleList.using(target_number=1,ask_number=True, complete_attribute='complete')
+  - interview: DAInterview
   - exhibit_attachment: ALExhibitDocument.using(
           title="Exhibits",
           filename="exhibits",
@@ -87,11 +89,12 @@ code: |
   users[0].name.last = studentattorney[0].name.last
   users.there_is_another = False
   Clinic_Practice_Area
+  Case_Type
   client.gather()
   client_optional_info
   Client_Source_Income
   set_progress(25)
-  Case_Description
+  # Case_Description ##### ADD THIS BACK IN 
   Court_Agency_Docket__number
   set_progress(50)
   other_parties.gather()
@@ -199,25 +202,27 @@ fields:
 id: Case Information
 question: |
   Case Information
-fields:
-  - "Case description": Case_Description
-    maxlength: 42
-    hint: e.g. Representing defendant in drug court
-  - "Case type": Case_Type
-    maxlength: 90
-    hint: e.g. Delinquency 
-  - "Case  synopsis": Case__synopsis
-    input type: area
-    maxlength: 910
-    required: False
-  - "Referral source": Referral_Source
-    maxlength: 84
-    required: False
-    hint: e.g., Duty day, Word of mouth, etc.
-  - "Scope of representation": Scope_Of_Representation
-    maxlength: 96
-    required: False
-    hint: e.g., Full, Bail only, etc.
+field: Case_Type 
+choices: 
+  code: casetype_choice
+check in: update_clinic_list
+--- 
+##### BE SURE TO ADD THIS BACK IN !!!!!!!!!!!!!!!!!!!!!!!######################
+#  - "Case description": Case_Description
+#    maxlength: 42
+#    hint: e.g. Representing defendant in drug court
+#  - "Case  synopsis": Case__synopsis
+#    input type: area
+#    maxlength: 910
+#    required: False
+#  - "Referral source": Referral_Source
+#    maxlength: 84
+#    required: False
+#    hint: e.g., Duty day, Word of mouth, etc.
+#  - "Scope of representation": Scope_Of_Representation
+#    maxlength: 96
+#    required: False
+#    hint: e.g., Full, Bail only, etc.
 ---
 id: optional case information 
 question: | 
@@ -263,7 +268,7 @@ sets:
 question: |
   Tell us about your client
 subquestion: | 
-  If your client is a company, use the name fields to provide the main contact
+  If your client is the company use the name fields to provide the main contact
 fields:
   - code: |
       client[i].name_fields()
@@ -535,8 +540,6 @@ yesno: contacts[i].there_is_another
 id: Conflict Information
 question: |
   Conflict Information
-subquestion: | 
-  You will have an opportunity to share your conflict check results next 
 fields:
   - "Conflict check complete": ConflictCheckComplete
     datatype: yesnowide
@@ -544,6 +547,8 @@ fields:
     show if: ConflictCheckComplete
     required: False
     datatype: yesnowide
+  - note: |
+      You will have an opportunity to upload and attach your conflict check results on the next screen 
   - "Date of conflict check": Date_ConflictCheck
     datatype: date
     show if: ConflictCheckComplete
@@ -615,7 +620,7 @@ attachments:
       - "Student_Atty_name": ${ studentattorney }
       - "ConflictCheckResultsAttached": ${ ConflictCheckResultsAttached }
       - "ConflictCheckComplete": ${ ConflictCheckComplete }
-      - "Date_ConflictCheck": ${ Date_ConflictCheck.format_date('MM/dd/YYYY')}
+      - "Date_ConflictCheck": ${ Date_ConflictCheck.format_date('MM/dd/YY')}
       - "Description_Conflict": ${ Description_Conflict }
       
       - "Case_Description": ${ Case_Description }
