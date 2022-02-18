@@ -1,0 +1,24 @@
+---
+event: update_clinic_list
+code: |
+  if action_argument('update_clinic_list') and Clinic_Practice_Area == 'Juvenile Defenders Clinic': 
+    casetype_choice = jdc_case_type
+  elif action_argument('update_clinic_list') and Clinic_Practice_Area == 'Accelerator Practice':
+    casetype_choice = a2p_case_type     
+---
+variable name: jdc_case_type 
+data: 
+  - Delinquency 
+  - Complaint
+  - Forms
+  - Youthful Offender 
+  - Magistrate Hearing 
+  - Violation of Probation 
+  - Unknown 
+  - Other 
+---
+variable name: a2p_case_type
+data: 
+  - Ali Wong 
+  - Taylor Tomlinson
+  - Iliza Shlesinger
