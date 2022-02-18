@@ -62,7 +62,6 @@ objects:
   - parent: ALPeopleList.using(target_number=1,ask_number=True)
   - contacts: ALPeopleList.using(object_type=Individual, complete_attribute='complete')
   - other_parties: ALPeopleList.using(target_number=1,ask_number=True, complete_attribute='complete')
-  - interview: DAInterview
   - exhibit_attachment: ALExhibitDocument.using(
           title="Exhibits",
           filename="exhibits",
@@ -89,15 +88,17 @@ code: |
   users[0].name.last = studentattorney[0].name.last
   users.there_is_another = False
   Clinic_Practice_Area
-  Case_Type
   client.gather()
+  set_progress(25)
   client_optional_info
   Client_Source_Income
-  set_progress(25)
+  Case_Type
+  Case_Description
   # Case_Description ##### ADD THIS BACK IN 
   Court_Agency_Docket__number
+  if other_party_option: 
+    other_parties.gather()
   set_progress(50)
-  other_parties.gather()
   contacts.there_are_any
   contacts.gather()
   ConflictCheckComplete
@@ -113,11 +114,11 @@ code: |
   al_intro_screen
   Case_Opening_Form_intro
   interview_order_Case_Opening_Form
-  signature_date
+  #signature_date
   # Save anonymized interview statistics (customize the saved data below)
   #store_variables_snapshot(data={'zip': users[0].address.zip})
   Case_Opening_Form_preview_question
-  basic_questions_signature_flow
+  #basic_questions_signature_flow
   Case_Opening_Form_download
 ---
 comment: |
@@ -199,30 +200,34 @@ fields:
       variable: Supervisor_name
       is: Other
 ---
-id: Case Information
+id: Case Type 
 question: |
-  Case Information
+  What kind of case
 field: Case_Type 
 choices: 
-  code: casetype_choice
-check in: update_clinic_list
+  code: case_types[Clinic_Practice_Area]
 --- 
-##### BE SURE TO ADD THIS BACK IN !!!!!!!!!!!!!!!!!!!!!!!######################
-#  - "Case description": Case_Description
-#    maxlength: 42
-#    hint: e.g. Representing defendant in drug court
-#  - "Case  synopsis": Case__synopsis
-#    input type: area
-#    maxlength: 910
-#    required: False
-#  - "Referral source": Referral_Source
-#    maxlength: 84
-#    required: False
-#    hint: e.g., Duty day, Word of mouth, etc.
-#  - "Scope of representation": Scope_Of_Representation
-#    maxlength: 96
-#    required: False
-#    hint: e.g., Full, Bail only, etc.
+id: Case information 
+question: | 
+  Fill in the case information
+fields: 
+  - "Case description": Case_Description
+    maxlength: 42
+    hint: e.g. Representing defendant in drug court
+    required: False
+  - "Case  synopsis": Case__synopsis
+    input type: area
+    maxlength: 910
+    required: False
+  - "Referral source": Referral_Source
+    maxlength: 84
+    required: False
+    hint: e.g., Duty day, Word of mouth, etc.
+  - "Scope of representation": Scope_Of_Representation
+    maxlength: 96
+    required: False
+    hint: e.g., Full, Bail only, etc.
+continue button: additional_case_info
 ---
 id: optional case information 
 question: | 
@@ -245,7 +250,6 @@ code: |
   client[i].name.last
   client[i].birthdate
   unhoused_logic
-  client[i].address.address
   client[i].mobile_number
   client[i].primary_language
   client[i].immigration_status
@@ -293,6 +297,7 @@ subquestion: |
   If the information is unknown or not applicable that is okay.
 fields: 
   - "Birthdate": client[i].birthdate
+    required: False
     datatype: birthdate
     maxlength: 12
   - "Gender expression": Client_gender
@@ -326,10 +331,6 @@ fields:
 ---
 generic object: ALIndividual
 id: client address
-sets:
-  - client[i].address.address
-  - client[i].address.city
-  - client[i].address.zip
 question: |
   What is ${client[i].name.first}'s address?
 fields:
@@ -338,8 +339,23 @@ fields:
   - Client is homeless: unhoused_client
     datatype: yesnowide
     disable others: True
-  - code: |
-      client[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
+  - Client address unknown: client_address_unknown
+    datatype: yesnowide
+    disable others: True
+  - Address: client[i].address
+    required: False
+  - Unit: client[i].unit
+    required: False
+  - City: client[i].city
+    required: False
+  - State: client[i].state
+    required: False
+    code: |
+      states_list()
+  - Zip: client[i].zip
+    required: False
+  #- code: |
+      #client[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
 ---
 id: client language questions 
 generic object: ALIndividual
@@ -411,10 +427,15 @@ fields:
     required: False
     show if: Knows_Client_Imm_Status
 ---
+id: have other party?
+question: | 
+  Do you know who the other party is? 
+yesno: other_party_option
+---
 id: other party gather 
 code: |
   other_parties[i].name
-  other_parties[i].address.address
+  other_parties_address_logic 
   other_parties[i].mobile_number
   other_parties[i].primary_language
   other_parties[i].complete = True
@@ -430,8 +451,14 @@ question: |
 subquestion: | 
   If the Commonwealth is the opposing party provide the District Attorney's information  
 fields:
-  - code: |
-      other_parties[i].name_fields()
+  - First name: other_parties[i].name.first
+    required: False
+  - Middle name: other_parties[i].name.middle
+    required: False
+  - Last name: other_parties[i].name.last
+    required: False
+  - Suffix: other_parties[i].name.suffix
+    required: False
   - "Company": Opp_Company
     required: False
     hint: e.g. Alphabet, Inc., Suffolk DA 
@@ -453,6 +480,15 @@ fields:
     maxlength: 270
     required: False
 ---
+id: other party logic 
+code: |
+  if op_address_unknown == True:
+    other_parties[i].address.address = 'Unknown'
+    other_parties[i].address.city = ' '
+    other_parties[i].address.state = ' ' 
+    other_parties[i].address.zip = ' '
+  other_parties_address_logic = True 
+---
 generic object: ALIndividual
 id: other party address
 sets:
@@ -462,8 +498,21 @@ sets:
 question: |
   What is ${other_parties[i].name.first}'s address?
 fields:
-  - code: |
-      other_parties[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
+  - Address unknown: op_address_unknown
+    datatype: yesnowide
+    disable others: True
+  - Address: other_parties[i].address
+    required: False
+  - Unit: other_parties[i].unit
+    required: False
+  - City: other_parties[i].city
+    required: False
+  - State: other_parties[i].state
+    required: False
+    code: |
+      states_list()
+  - Zip: other_parties[i].zip
+    required: False
 ---
 id: Opposition Contact Information
 question: |
@@ -487,7 +536,7 @@ question: |
   What is ${ other_parties[i].name.first }'s primary language(s) 
 fields: 
   - "${ other_parties[i].name.first } requires an interpreter": Opp_Interpreter
-    datatype: yesnowide
+    datatype: yesno
   - "Primary language(s)": other_parties[i].primary_language
     required: False
 ---
@@ -581,8 +630,8 @@ event: Case_Opening_Form_download
 question: |
   Your form is ready to download.
 subquestion: |
-  Thank you {users}. Your form is ready to download and deliver.
-  
+  Thank you ${users}. Your form is ready to download and/or email. It is recommended that you email a copy to yourself and forward to your supervisor for their sign off. 
+
   View, download and send your form below. Click the "Make changes" button to fix any mistakes.
 
   ${ action_button_html(url_action('review_Case_Opening_Form'), label='Make changes', color='info') }

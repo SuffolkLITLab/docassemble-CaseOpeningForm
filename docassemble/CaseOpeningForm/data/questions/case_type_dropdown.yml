@@ -1,24 +1,36 @@
 ---
-event: update_clinic_list
-code: |
-  if action_argument('update_clinic_list') and Clinic_Practice_Area == 'Juvenile Defenders Clinic': 
-    casetype_choice = jdc_case_type
-  elif action_argument('update_clinic_list') and Clinic_Practice_Area == 'Accelerator Practice':
-    casetype_choice = a2p_case_type     
+#event: update_clinic_list
+#code: |
+#  if action_argument('update_clinic_list') and Clinic_Practice_Area == 'Juvenile Defenders Clinic': 
+#    casetype_choice = jdc_case_type
+#  elif action_argument('update_clinic_list') and Clinic_Practice_Area == 'Accelerator Practice':
+#    casetype_choice = a2p_case_type     
 ---
-variable name: jdc_case_type 
-data: 
-  - Delinquency 
-  - Complaint
-  - Forms
-  - Youthful Offender 
-  - Magistrate Hearing 
-  - Violation of Probation 
-  - Unknown 
-  - Other 
----
-variable name: a2p_case_type
-data: 
-  - Ali Wong 
-  - Taylor Tomlinson
-  - Iliza Shlesinger
+variable name: case_types 
+data:
+  Juvenile Defenders Clinic:
+    - Delinquency 
+    - Complaint
+    - Forms
+    - Youthful Offender 
+    - Magistrate Hearing 
+    - Violation of Probation 
+    - Unknown 
+    - Other 
+  Accelerator Practice: 
+    - Consumer protection
+    - CORI
+    - Discrimination 
+    - Discrimination because of race and source of income
+    - Discrimination due to source of income
+    - Employment
+    - Eviction
+    - Eviction/30 day notice to quit
+    - Eviction/Notice to Quit
+    - Eviction/Summary Process
+    - Housing Discrimination 
+    - Housing/Condotions
+    - Other
+    - Security Deposit
+    - Small Claim
+    - Unknown
