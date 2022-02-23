@@ -103,7 +103,8 @@ code: |
   contacts.there_are_any
   contacts.gather()
   ConflictCheckComplete
-  exhibit_attachment.exhibits.gather()
+  exhibit_attachment.has_exhibits
+  #exhibit_attachment.exhibits.gather() 
   interview_order_Case_Opening_Form = True
 ---
 ###################### Main order ######################
@@ -136,7 +137,7 @@ subquestion: |
   
   * Each docket number requires its own case opening;
   
-  * You are  responsible for copying most of the information into the Clio 
+  * You are responsible for copying most of the information into the Clio.
 ---
 question: |
   How many student attorneys are assigned to this case?
@@ -225,6 +226,9 @@ fields:
     maxlength: 42
     hint: e.g., Representing defendant in drug court
     required: False
+  - "Court/Agency Docket #": Court_Agency_Docket__number
+    maxlength: 96
+    required: False
   - "Case  synopsis": Case__synopsis
     input type: area
     hint: e.g., List of charges, description of complaint
@@ -242,11 +246,8 @@ continue button: additional_case_info
 ---
 id: optional case information 
 question: | 
-  Provide the court information
+  Court information
 fields: 
-  - "Court/Agency Docket No.": Court_Agency_Docket__number
-    maxlength: 96
-    required: False
   - "Judge name": Judge_name
     maxlength: 48
     required: False
@@ -350,17 +351,17 @@ fields:
   - Client is homeless: unhoused_client
     datatype: yesnowide
     disable others: True
-  - Address: client[i].address
+  - Address: client[i].address.address
     required: False
-  - Unit: client[i].unit
+  - Unit: client[i].address.unit
     required: False
-  - City: client[i].city
+  - City: client[i].address.city
     required: False
-  - State: client[i].state
+  - State: client[i].address.state
     required: False
     code: |
       states_list()
-  - Zip: client[i].zip
+  - Zip: client[i].address.zip
     required: False
   #- code: |
       #client[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
@@ -505,17 +506,17 @@ fields:
   - Address unknown: op_address_unknown
     datatype: yesno
     disable others: True
-  - Address: other_parties[i].address
+  - Address: other_parties[i].address.address
     required: False
-  - Unit: other_parties[i].unit
+  - Unit: other_parties[i].address.unit
     required: False
-  - City: other_parties[i].city
+  - City: other_parties[i].address.city
     required: False
-  - State: other_parties[i].state
+  - State: other_parties[i].address.state
     required: False
     code: |
       states_list()
-  - Zip: other_parties[i].zip
+  - Zip: other_parties[i].address.zip
     required: False
 ---
 id: Opposition Contact Information
@@ -612,7 +613,7 @@ yesno: contacts[i].there_is_another
 ---
 id: Conflict Information
 question: |
-  Conflict Information
+  Conflict Check
 fields:
   - "Conflict check complete": ConflictCheckComplete
     datatype: yesnowide
@@ -622,8 +623,10 @@ fields:
     datatype: yesnowide
   - note: |
       You will have an opportunity to upload and attach your conflict check results on the next screen 
+    show if: ConflictCheckComplete
   - "Date of conflict check": Date_ConflictCheck
     datatype: date
+    default: ${today()}
     show if: ConflictCheckComplete
   - "Description of conflict check": Description_Conflict
     show if: ConflictCheckComplete
@@ -725,8 +728,6 @@ attachments:
       - "Client_Interpreter": | 
           % if Client_Interpreter == True: 
           Yes
-          % else: 
-          No
           % endif
       - "Client_Primary_Languages": ${ client[0].primary_language  }
       - "Client_Race": ${ Client_Race }
@@ -753,8 +754,6 @@ attachments:
       - "Opp_Interpreter": |
           % if Opp_Interpreter == True: 
           Yes
-          % else: 
-          No
           % endif
       - "opp_PrimaryLanguages": ${ other_parties[0].primary_language }
       - "opp_email": ${ other_parties[0].email }
