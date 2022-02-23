@@ -65,6 +65,7 @@ objects:
   - exhibit_attachment: ALExhibitDocument.using(
           title="Exhibits",
           filename="exhibits",
+          auto_gather=False,
           add_page_numbers=True,
           include_table_of_contents=False,
           include_exhibit_cover_pages=False,
@@ -121,16 +122,21 @@ code: |
   #basic_questions_signature_flow
   Case_Opening_Form_download
 ---
-comment: |
-  This question is used to introduce your interview. Please customize
+decoration: address-card
 id: Case_Opening_Form
 continue button field: Case_Opening_Form_intro
 question: |
-  Case Opening Form
+  Fill out the forms to request a new case be opened in Clio 
 subquestion: |
   Case Opening Form for Clinical Programs at Suffolk University Law School
   
-  Fill out this interview for each case for your client. Each docket number requires its own form. 
+  **Things to remember: **
+  
+  * Provide as much information as you can but do not let missing information prevent you from moving forward; 
+  
+  * Each docket number requires its own case opening;
+  
+  * You are  responsible for copying most of the information into the Clio 
 ---
 question: |
   How many student attorneys are assigned to this case?
@@ -200,23 +206,28 @@ fields:
       variable: Supervisor_name
       is: Other
 ---
-id: Case Type 
-question: |
-  What kind of case
-field: Case_Type 
-choices: 
-  code: case_types[Clinic_Practice_Area]
+#id: Case Type 
+#question: |
+#  What kind of case
+#field: Case_Type 
+#choices: 
+#  code: case_types[Clinic_Practice_Area]
 --- 
 id: Case information 
 question: | 
-  Fill in the case information
-fields: 
+  Matter/Case Information
+fields:
+  - "Case Type": Case_Type
+    datatype: dropdown 
+    code: case_types[Clinic_Practice_Area]
+    required: False
   - "Case description": Case_Description
     maxlength: 42
-    hint: e.g. Representing defendant in drug court
+    hint: e.g., Representing defendant in drug court
     required: False
   - "Case  synopsis": Case__synopsis
     input type: area
+    hint: e.g., List of charges, description of complaint
     maxlength: 910
     required: False
   - "Referral source": Referral_Source
@@ -233,7 +244,7 @@ id: optional case information
 question: | 
   Provide the court information
 fields: 
-  - "Docket number": Court_Agency_Docket__number
+  - "Court/Agency Docket No.": Court_Agency_Docket__number
     maxlength: 96
     required: False
   - "Judge name": Judge_name
@@ -298,7 +309,7 @@ subquestion: |
 fields: 
   - "Birthdate": client[i].birthdate
     required: False
-    datatype: birthdate
+    datatype: date
     maxlength: 12
   - "Gender expression": Client_gender
     maxlength: 33
@@ -339,9 +350,6 @@ fields:
   - Client is homeless: unhoused_client
     datatype: yesnowide
     disable others: True
-  - Client address unknown: client_address_unknown
-    datatype: yesnowide
-    disable others: True
   - Address: client[i].address
     required: False
   - Unit: client[i].unit
@@ -363,11 +371,11 @@ sets:
   - client[i].primary_language
   - client[i].immigration_status
 question: |
-  What is ${ client[i].name.first }'s primary language(s) 
+  What is ${ client[i].name.first }'s primary language?
 fields: 
   - "Client requires an interpreter": Client_Interpreter
-    datatype: yesnowide
-  - "Primary language(s)": client[i].primary_language
+    datatype: yesno
+  - "Primary language": client[i].primary_language
     required: False
   - "Immigration status": client[i].immigration_status
     required: False
@@ -384,10 +392,10 @@ fields:
     maxlength: 40
     required: False
   - "Number of people in their household": Client_Number_Household
-    datatype: integer
+    maxlength: 5
     required: False
   - "Number of dependents": Client_NumberOfDependents
-    datatype: integer
+    maxlength: 5
     required: False
 --- 
 id: client language information 
@@ -449,7 +457,7 @@ id: opposition information
 question: |
   Information about the other side
 subquestion: | 
-  If the Commonwealth is the opposing party provide the District Attorney's information  
+  If the Commonwealth is the opposing party provide the assigned District Attorney's information  
 fields:
   - First name: other_parties[i].name.first
     required: False
@@ -469,7 +477,7 @@ fields:
     maxlength: 180
     required: False
   - "Date of birth": other_parties[i].birthdate
-    datatype: birthdate
+    datatype: date
     required: False
     maxlength: 11
   - "Gender expression": opp_GenderExpression
@@ -491,15 +499,11 @@ code: |
 ---
 generic object: ALIndividual
 id: other party address
-sets:
-  - other_parties[i].address.address
-  - other_parties[i].address.city
-  - other_parties[i].address.zip
 question: |
   What is ${other_parties[i].name.first}'s address?
 fields:
   - Address unknown: op_address_unknown
-    datatype: yesnowide
+    datatype: yesno
     disable others: True
   - Address: other_parties[i].address
     required: False
@@ -576,6 +580,26 @@ fields:
   - "Contact email": contacts[i].email 
     maxlength: 39
     required: False
+--- 
+generic object: ALIndividual
+id: contact address 
+question: |
+  What is ${contacts[i].name.first}'s address?
+fields:
+  - Address: contacts[i].address
+    required: False
+  - Unit: contacts[i].unit
+    required: False
+  - City: contacts[i].city
+    required: False
+  - State: contacts[i].state
+    required: False
+    code: |
+      states_list()
+  - Zip: contacts[i].zip
+    required: False
+  #- code: |
+      #contacts[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
 ---
 id: another contact 
 question: |
@@ -681,7 +705,7 @@ attachments:
       - "Case_Type": ${ Case_Type }
       - "Case__synopsis": ${ Case__synopsis }
       
-      - "client_birthdate": ${ client[0].birthdate }
+      - "client_birthdate": ${ client[0].birthdate.format_date('MM/dd/YYYY')}
       - "Client_gender": ${ Client_gender }
       - "Client_Name": ${ client[0].name }
       - "Client_Company": ${ Client_Company }
@@ -714,7 +738,7 @@ attachments:
       - "Client_Number_Household": ${ Client_Number_Household }
       - "Client_Notes": ${ Client_Notes }
       
-      - "opp_DateOfBirth": ${ other_parties[0].birthdate }
+      - "opp_DateOfBirth": ${ other_parties[0].birthdateformat_date('MM/dd/YYYY') }
       - "opp_name": ${ other_parties[0].name.full() }
       - "opp_GenderExpression": ${ opp_GenderExpression }
       - "opp_title": ${ opp_title }
