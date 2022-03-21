@@ -108,7 +108,13 @@ code: |
   users.there_is_another = False
   Clinic_Practice_Area
   set_progress(25)
-  interview_questions_choice
+  if Clinic_Practice_Area == 'Juvenile Defenders Clinic':
+    if police_report == True: 
+      interview_questions_choice = 'Detailed'
+    else: 
+      interview_questions_choice
+  else: 
+    interview_questions_choice
   client.gather()
   if interview_questions_choice == 'Detailed': 
     client_optional_info
@@ -145,6 +151,11 @@ code: |
   #store_variables_snapshot(data={'zip': users[0].address.zip})
   #basic_questions_signature_flow
   Case_Opening_Form_download
+---
+id: police report 
+question: | 
+  Do you have a police report? 
+yesno: police_report
 ---
 id: fill in choice 
 question: | 
