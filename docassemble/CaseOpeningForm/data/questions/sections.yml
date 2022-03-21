@@ -1,0 +1,17 @@
+---
+sections:
+  - Clinic Information
+ #- Introduction
+ #- About you:
+ #  - Contact info
+ #  - Demographics
+ #- Preferences
+ #- Conclusion
+---
+features:
+  navigation: True
+  progress bar: True
+---
+mandatory: True
+code: |
+  menu_items = [ action_menu_item('Roadmap', 'road_map') ]

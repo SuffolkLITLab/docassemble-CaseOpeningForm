@@ -2,6 +2,7 @@ include:
   - docassemble.AssemblyLine:al_package.yml
   - review_screen.yml
   - case_type_dropdown.yml
+  #- sections.yml
 ---
 metadata:
   title: |
@@ -10,6 +11,24 @@ metadata:
     Case Opening Form
   authors:
     - LIT Lab
+---
+sections:
+  - Instructions 
+  - Clinic info
+  - About your client 
+  - Case information 
+  - Opposing party
+  - Contacts
+  - Conflict check 
+  - Download
+---
+features:
+  navigation: True
+  progress bar: True
+---
+mandatory: True
+code: |
+  menu_items = [ action_menu_item('Roadmap', 'road_map') ]
 ---
 mandatory: True
 comment: |
@@ -70,9 +89,7 @@ objects:
           include_table_of_contents=False,
           include_exhibit_cover_pages=False,
         )
----
-sections:
-  - review_Case_Opening_Form: Review your answers
+
 ---
 #################### Interview order #####################
 comment: |
@@ -80,8 +97,9 @@ comment: |
 id: interview_order_Case_Opening_Form
 code: |
   # Set the allowed courts for this interview
+  nav.get_section(display=True)
   allowed_courts = interview_metadata["Case_Opening_Form"]["allowed courts"]
-  nav.set_section('review_Case_Opening_Form')
+  nav.set_section('Clinic_info')
   user_role = 'na'
   studentattorney.target_number
   studentattorney.gather()
@@ -89,22 +107,28 @@ code: |
   users[0].name.last = studentattorney[0].name.last
   users.there_is_another = False
   Clinic_Practice_Area
-  client.gather()
   set_progress(25)
-  client_optional_info
-  Client_Source_Income
+  interview_questions_choice
+  client.gather()
+  if interview_questions_choice == 'Detailed': 
+    client_optional_info
+    Client_Source_Income
+
   Case_Type
-  Case_Description
-  # Case_Description ##### ADD THIS BACK IN 
+  if interview_questions_choice == 'Detailed': 
+    Case_Description
   Court_Agency_Docket__number
-  if other_party_option: 
-    other_parties.gather()
+  if interview_questions_choice == 'Detailed': 
+    if other_party_option: 
+      other_parties.gather()
   set_progress(50)
-  contacts.there_are_any
-  contacts.gather()
+  if interview_questions_choice == 'Detailed': 
+    contacts.there_are_any
+    contacts.gather()
   ConflictCheckComplete
-  exhibit_attachment.has_exhibits
-  #exhibit_attachment.exhibits.gather() 
+  if exhibit_attachment.exhibits.has_exhibits:
+    exhibit_attachment.exhibits.gather()
+  #nav.set_section('review_Case_Opening_Form')
   interview_order_Case_Opening_Form = True
 ---
 ###################### Main order ######################
@@ -119,26 +143,34 @@ code: |
   #signature_date
   # Save anonymized interview statistics (customize the saved data below)
   #store_variables_snapshot(data={'zip': users[0].address.zip})
-  Case_Opening_Form_preview_question
   #basic_questions_signature_flow
   Case_Opening_Form_download
 ---
-decoration: address-card
+id: fill in choice 
+question: | 
+  How would you like to proceed?
+subquestion: | 
+  It is recommended you go through the entire form and provide as much information as you can. Select **Detailed** to fill out the in depth case opening.
+  
+  If you have  limited information and need to open your case ASAP, you may choose the **Express** option to avoid in depth questions. **You will still need to go back and add the information in Clio, ** but it is important to open the case as soon as posssible.  
+field: interview_questions_choice
+choices: 
+  - Detailed 
+  - Express
+---
 id: Case_Opening_Form
 continue button field: Case_Opening_Form_intro
 question: |
-  Fill out the forms to request a new case be opened in Clio 
+  How to use this tool
 subquestion: |
-  Case Opening Form for Clinical Programs at Suffolk University Law School
-  
-  **Things to remember: **
-  
   * Provide as much information as you can but do not let missing information prevent you from moving forward; 
   
-  * Each docket number requires its own case opening;
+  * Each docket number requires its own case opening form;
   
-  * You are responsible for copying most of the information into the Clio.
+  * You are responsible for copying the information into the Clio file once opened.
 ---
+id: student attorney 
+section: Clinic info
 question: |
   How many student attorneys are assigned to this case?
 fields:
@@ -160,8 +192,10 @@ question: |
 fields:
   - code: |
       studentattorney[i].name_fields()
+section: Clinic info
 ---
 id: clinic information 
+section: Clinic info
 question: |
   Select your clinic 
 fields: 
@@ -206,27 +240,20 @@ fields:
     show if:
       variable: Supervisor_name
       is: Other
----
-#id: Case Type 
-#question: |
-#  What kind of case
-#field: Case_Type 
-#choices: 
-#  code: case_types[Clinic_Practice_Area]
 --- 
 id: Case information 
+section: Case information
 question: | 
-  Matter/Case Information
+  Case Information
 fields:
   - "Case Type": Case_Type
     datatype: dropdown 
     code: case_types[Clinic_Practice_Area]
-    required: False
   - "Case description": Case_Description
     maxlength: 42
     hint: e.g., Representing defendant in drug court
     required: False
-  - "Court/Agency Docket #": Court_Agency_Docket__number
+  - "Docket #": Court_Agency_Docket__number
     maxlength: 96
     required: False
   - "Case  synopsis": Case__synopsis
@@ -301,8 +328,10 @@ fields:
     input type: area
     maxlength: 360
     required: False
+section: About your client
 ---
 id: additional client info
+section: About your client
 question: | 
   Demographic information about ${client[i].name.first}
 subquestion: |
@@ -324,6 +353,7 @@ fields:
 continue button field: client_optional_info
 ---
 id: Client Contact Information
+section: About your client 
 sets: 
   - client[i].mobile_number
   - client[i].phone_number
@@ -343,6 +373,7 @@ fields:
 ---
 generic object: ALIndividual
 id: client address
+section: About your client
 question: |
   What is ${client[i].name.first}'s address?
 fields:
@@ -352,6 +383,7 @@ fields:
     datatype: yesnowide
     disable others: True
   - Address: client[i].address.address
+    address autocomplete: True
     required: False
   - Unit: client[i].address.unit
     required: False
@@ -367,6 +399,7 @@ fields:
       #client[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
 ---
 id: client language questions 
+section: About your client 
 generic object: ALIndividual
 sets: 
   - client[i].primary_language
@@ -383,6 +416,7 @@ fields:
     hint: e.g. US Citizen, Work Visa, Undocumented
 ---
 id: Client Background Information
+section: About your client 
 question: |
   Information about ${ client[0].name.first}'s household
 fields:
@@ -437,6 +471,7 @@ fields:
     show if: Knows_Client_Imm_Status
 ---
 id: have other party?
+section: Other pary 
 question: | 
   Do you know who the other party is? 
 yesno: other_party_option
@@ -455,6 +490,7 @@ sets:
   - other_parties[i].name.middle
   - other_parties[i].name.suffix
 id: opposition information
+section: Opposing party
 question: |
   Information about the other side
 subquestion: | 
@@ -500,6 +536,7 @@ code: |
 ---
 generic object: ALIndividual
 id: other party address
+section: Opposing party
 question: |
   What is ${other_parties[i].name.first}'s address?
 fields:
@@ -507,6 +544,7 @@ fields:
     datatype: yesno
     disable others: True
   - Address: other_parties[i].address.address
+    address autocomplete: True
     required: False
   - Unit: other_parties[i].address.unit
     required: False
@@ -520,6 +558,7 @@ fields:
     required: False
 ---
 id: Opposition Contact Information
+secton: Opposing party 
 question: |
   Enter  ${other_parties[0].name.first}'s contact information
 fields:  
@@ -534,6 +573,7 @@ fields:
     required: False
 ---
 id: other party language questions 
+section: Opposing party
 generic object: ALIndividual
 sets: 
   - other_parties[i].primary_language
@@ -560,6 +600,7 @@ code: |
   contacts[i].complete = True
 ---
 id: contact relationship
+section: Contacts
 generic object: ALIndividual
 question: |
   What is ${ contacts[i].name.first}'s relationship to the case?
@@ -569,6 +610,7 @@ fields:
     hint: e.g Witness, alleged victim, parent
 ---
 id: contacts contact info
+section: Contacts
 generic object: ALIndividual
 question: | 
   What is ${ contacts[i].name.first}'s contact information 
@@ -583,11 +625,13 @@ fields:
     required: False
 --- 
 generic object: ALIndividual
+section: Contacts
 id: contact address 
 question: |
   What is ${contacts[i].name.first}'s address?
 fields:
   - Address: contacts[i].address
+    address autocomplete: True
     required: False
   - Unit: contacts[i].unit
     required: False
@@ -603,6 +647,7 @@ fields:
       #contacts[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
 ---
 id: another contact 
+section: Contacts
 question: |
   Do you have another contact to add to the case?
 subquestion: |
@@ -612,6 +657,7 @@ subquestion: |
 yesno: contacts[i].there_is_another 
 ---
 id: Conflict Information
+section: Conflict check 
 question: |
   Conflict Check
 fields:
@@ -633,41 +679,25 @@ fields:
     input type: area
     maxlength: 294
 ---
-id: preview Case_Opening_Form
-question: |
-  Preview your form before you sign it
-subquestion: |
-  Here is a preview of the form.   
-  
-  ${ al_recipient_bundle.as_pdf(key='preview') }
-
-  Click the image to open it in a new tab. Click the "Make changes" button
-  to edit your answers.
-
-  ${ action_button_html(url_action('review_Case_Opening_Form'), label='Make changes', color='info') }
-  
-  Remember to come back to this window to continue.
-continue button field: Case_Opening_Form_preview_question    
----
 code: |
   signature_fields = []
 ---
 id: download Case_Opening_Form
+section: Download
 event: Case_Opening_Form_download
 question: |
   Your form is ready to download.
 subquestion: |
-  Thank you ${users}. Your form is ready to download and/or email. It is recommended that you email a copy to yourself and forward to your supervisor for their sign off. 
+  Thank you ${users}. Your form is ready to download and/or email.
+  
+  Email a copy to yourself and forward to your supervisor for their sign off. 
 
   View, download and send your form below. Click the "Make changes" button to fix any mistakes.
-
-  ${ action_button_html(url_action('review_Case_Opening_Form'), label='Make changes', color='info') }
-  
   
   ${ al_user_bundle.download_list_html() }
   
 
-  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=True) }
 
 progress: 100
 ---
@@ -818,6 +848,7 @@ code: |
 ---
 generic object: ALExhibitList
 id: any exhibits
+section: Conflict check 
 question: |
   % if al_form_type in ['starts_case','existing_case','appeal']:
   Do you have any documents that you want to provide to the court?
@@ -825,7 +856,7 @@ question: |
   Do you have any documents that you want to attach to this form?
   % endif
 subquestion: | 
-  Incldue screenshots from the conflict or any additional opening forms
+  Include screenshots from the conflict or any additional opening forms
 fields:
   - Do you have any documents you want to upload?: x.has_exhibits
     datatype: yesnoradio
@@ -855,37 +886,23 @@ validation code: |
 ---
 id: basic questions intro screen
 decoration: form-lineal
+section: Instructions
 question: |
   ${interview_short_title}: ${ AL_ORGANIZATION_TITLE}
 subquestion: |
-  % if form_approved_for_email_filing:
-  The ${ AL_ORGANIZATION_TITLE } Project can help you complete and file court forms in 3 steps:
-  % else:
-  The ${ AL_ORGANIZATION_TITLE } Project can help you complete and download forms in 3 steps:
-  % endif
-  
+
+  The ${ AL_ORGANIZATION_TITLE } Project can help you complete the Clinical Programs Case Opening Form. 
+
   Step 1. Answer questions that will fill in your form for you.  
   Step 2. Preview the completed form.  
-  % if form_approved_for_email_filing:  
-  Step 3. Email the form to the court using this secure website and save copies
-  for yourself for later reference.  
-  % elif al_form_type in ['starts_case','existing_case','appeal']:
-  Step 3. Download and print the final form. You will need to deliver it
-  to the court on your own.
-  % else:
-  Step 3. Download and print the final form. You will need to deliver it 
-  on your own.
-  % endif
-  
-  This site is not a lawyer. If you would like a lawyer, find [your local
-  legal aid provider](https://www.lsc.gov/what-legal-aid/find-legal-aid).
+  Step 3. Download and print the final form.  [BR]
+  Step 4. Share the completed form to your supervisior for their approval. [BR]
+  Step 5. Once approved, forward to Joan for new matter creation. 
+  [BR]
+  Step 5. Save a copy to the client file. 
   
   Tap the {green words} in any screen for a definition or more information.
-  
-  % if chat_partners_available().help:
-  Live help is currently available in this interview. Click the speech bubble
-  (:comment-alt:) in the navigation bar to connect to a live advocate for help.
-  % endif
+
 fields:
   - To continue, you must accept our [terms of use](${ AL_ORGANIZATION_HOMEPAGE }/privacy/): acknowledged_information_use
     datatype: checkboxes
@@ -906,5 +923,7 @@ right: |
   Saved answers available!  
   
   ${action_button_html(url_action('load_answer'), icon="folder-open", label=word("View answers"), size="sm" )}
-  % endif    
+  % endif
+---
+
 
