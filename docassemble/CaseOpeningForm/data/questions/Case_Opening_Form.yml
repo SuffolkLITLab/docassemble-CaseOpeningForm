@@ -1,6 +1,8 @@
 include:
   - docassemble.AssemblyLine:al_package.yml
   - review_screen.yml
+  - case_type_dropdown.yml
+  #- sections.yml
 ---
 metadata:
   title: |
@@ -9,6 +11,24 @@ metadata:
     Case Opening Form
   authors:
     - LIT Lab
+---
+sections:
+  - Instructions 
+  - Clinic info
+  - About your client 
+  - Case information 
+  - Opposing party
+  - Contacts
+  - Conflict check 
+  - Download
+---
+features:
+  navigation: True
+  progress bar: True
+---
+mandatory: True
+code: |
+  menu_items = [ action_menu_item('Roadmap', 'road_map') ]
 ---
 mandatory: True
 comment: |
@@ -64,13 +84,12 @@ objects:
   - exhibit_attachment: ALExhibitDocument.using(
           title="Exhibits",
           filename="exhibits",
+          auto_gather=False,
           add_page_numbers=True,
           include_table_of_contents=False,
           include_exhibit_cover_pages=False,
         )
----
-sections:
-  - review_Case_Opening_Form: Review your answers
+
 ---
 #################### Interview order #####################
 comment: |
@@ -78,8 +97,9 @@ comment: |
 id: interview_order_Case_Opening_Form
 code: |
   # Set the allowed courts for this interview
+  nav.get_section(display=True)
   allowed_courts = interview_metadata["Case_Opening_Form"]["allowed courts"]
-  nav.set_section('review_Case_Opening_Form')
+  nav.set_section('Clinic_info')
   user_role = 'na'
   studentattorney.target_number
   studentattorney.gather()
@@ -87,18 +107,28 @@ code: |
   users[0].name.last = studentattorney[0].name.last
   users.there_is_another = False
   Clinic_Practice_Area
-  client.gather()
-  client_optional_info
-  Client_Source_Income
   set_progress(25)
-  Case_Description
+  interview_questions_choice
+  client.gather()
+  if interview_questions_choice == 'Detailed': 
+    client_optional_info
+    Client_Source_Income
+
+  Case_Type
+  if interview_questions_choice == 'Detailed': 
+    Case_Description
   Court_Agency_Docket__number
+  if interview_questions_choice == 'Detailed': 
+    if other_party_option: 
+      other_parties.gather()
   set_progress(50)
-  other_parties.gather()
-  contacts.there_are_any
-  contacts.gather()
+  if interview_questions_choice == 'Detailed': 
+    contacts.there_are_any
+    contacts.gather()
   ConflictCheckComplete
-  exhibit_attachment.exhibits.gather()
+  if exhibit_attachment.exhibits.has_exhibits:
+    exhibit_attachment.exhibits.gather()
+  #nav.set_section('review_Case_Opening_Form')
   interview_order_Case_Opening_Form = True
 ---
 ###################### Main order ######################
@@ -110,24 +140,37 @@ code: |
   al_intro_screen
   Case_Opening_Form_intro
   interview_order_Case_Opening_Form
-  signature_date
+  #signature_date
   # Save anonymized interview statistics (customize the saved data below)
   #store_variables_snapshot(data={'zip': users[0].address.zip})
-  Case_Opening_Form_preview_question
-  basic_questions_signature_flow
+  #basic_questions_signature_flow
   Case_Opening_Form_download
 ---
-comment: |
-  This question is used to introduce your interview. Please customize
+id: fill in choice 
+question: | 
+  How would you like to proceed?
+subquestion: | 
+  It is recommended you go through the entire form and provide as much information as you can. Select **Detailed** to fill out the in depth case opening.
+  
+  If you have  limited information and need to open your case ASAP, you may choose the **Express** option to avoid in depth questions. **You will still need to go back and add the information in Clio, ** but it is important to open the case as soon as posssible.  
+field: interview_questions_choice
+choices: 
+  - Detailed 
+  - Express
+---
 id: Case_Opening_Form
 continue button field: Case_Opening_Form_intro
 question: |
-  Case Opening Form
+  How to use this tool
 subquestion: |
-  Case Opening Form for Clinical Programs at Suffolk University Law School
+  * Provide as much information as you can but do not let missing information prevent you from moving forward; 
   
-  Fill out this interview for each case for your client. Each docket number requires its own form. 
+  * Each docket number requires its own case opening form;
+  
+  * You are responsible for copying the information into the Clio file once opened.
 ---
+id: student attorney 
+section: Clinic info
 question: |
   How many student attorneys are assigned to this case?
 fields:
@@ -149,8 +192,10 @@ question: |
 fields:
   - code: |
       studentattorney[i].name_fields()
+section: Clinic info
 ---
 id: clinic information 
+section: Clinic info
 question: |
   Select your clinic 
 fields: 
@@ -195,19 +240,25 @@ fields:
     show if:
       variable: Supervisor_name
       is: Other
----
-id: Case Information
-question: |
+--- 
+id: Case information 
+section: Case information
+question: | 
   Case Information
 fields:
+  - "Case Type": Case_Type
+    datatype: dropdown 
+    code: case_types[Clinic_Practice_Area]
   - "Case description": Case_Description
     maxlength: 42
-    hint: e.g. Representing defendant in drug court
-  - "Case type": Case_Type
-    maxlength: 90
-    hint: e.g. Delinquency 
+    hint: e.g., Representing defendant in drug court
+    required: False
+  - "Docket #": Court_Agency_Docket__number
+    maxlength: 96
+    required: False
   - "Case  synopsis": Case__synopsis
     input type: area
+    hint: e.g., List of charges, description of complaint
     maxlength: 910
     required: False
   - "Referral source": Referral_Source
@@ -218,14 +269,12 @@ fields:
     maxlength: 96
     required: False
     hint: e.g., Full, Bail only, etc.
+continue button: additional_case_info
 ---
 id: optional case information 
 question: | 
-  Provide the court information
+  Court information
 fields: 
-  - "Docket number": Court_Agency_Docket__number
-    maxlength: 96
-    required: False
   - "Judge name": Judge_name
     maxlength: 48
     required: False
@@ -240,7 +289,6 @@ code: |
   client[i].name.last
   client[i].birthdate
   unhoused_logic
-  client[i].address.address
   client[i].mobile_number
   client[i].primary_language
   client[i].immigration_status
@@ -263,7 +311,7 @@ sets:
 question: |
   Tell us about your client
 subquestion: | 
-  If your client is a company, use the name fields to provide the main contact
+  If your client is the company use the name fields to provide the main contact
 fields:
   - code: |
       client[i].name_fields()
@@ -280,15 +328,18 @@ fields:
     input type: area
     maxlength: 360
     required: False
+section: About your client
 ---
 id: additional client info
+section: About your client
 question: | 
   Demographic information about ${client[i].name.first}
 subquestion: |
   If the information is unknown or not applicable that is okay.
 fields: 
   - "Birthdate": client[i].birthdate
-    datatype: birthdate
+    required: False
+    datatype: date
     maxlength: 12
   - "Gender expression": Client_gender
     maxlength: 33
@@ -302,6 +353,7 @@ fields:
 continue button field: client_optional_info
 ---
 id: Client Contact Information
+section: About your client 
 sets: 
   - client[i].mobile_number
   - client[i].phone_number
@@ -321,10 +373,7 @@ fields:
 ---
 generic object: ALIndividual
 id: client address
-sets:
-  - client[i].address.address
-  - client[i].address.city
-  - client[i].address.zip
+section: About your client
 question: |
   What is ${client[i].name.first}'s address?
 fields:
@@ -333,26 +382,41 @@ fields:
   - Client is homeless: unhoused_client
     datatype: yesnowide
     disable others: True
-  - code: |
-      client[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
+  - Address: client[i].address.address
+    address autocomplete: True
+    required: False
+  - Unit: client[i].address.unit
+    required: False
+  - City: client[i].address.city
+    required: False
+  - State: client[i].address.state
+    required: False
+    code: |
+      states_list()
+  - Zip: client[i].address.zip
+    required: False
+  #- code: |
+      #client[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
 ---
 id: client language questions 
+section: About your client 
 generic object: ALIndividual
 sets: 
   - client[i].primary_language
   - client[i].immigration_status
 question: |
-  What is ${ client[i].name.first }'s primary language(s) 
+  What is ${ client[i].name.first }'s primary language?
 fields: 
   - "Client requires an interpreter": Client_Interpreter
-    datatype: yesnowide
-  - "Primary language(s)": client[i].primary_language
+    datatype: yesno
+  - "Primary language": client[i].primary_language
     required: False
   - "Immigration status": client[i].immigration_status
     required: False
     hint: e.g. US Citizen, Work Visa, Undocumented
 ---
 id: Client Background Information
+section: About your client 
 question: |
   Information about ${ client[0].name.first}'s household
 fields:
@@ -363,10 +427,10 @@ fields:
     maxlength: 40
     required: False
   - "Number of people in their household": Client_Number_Household
-    datatype: integer
+    maxlength: 5
     required: False
   - "Number of dependents": Client_NumberOfDependents
-    datatype: integer
+    maxlength: 5
     required: False
 --- 
 id: client language information 
@@ -406,10 +470,16 @@ fields:
     required: False
     show if: Knows_Client_Imm_Status
 ---
+id: have other party?
+section: Other pary 
+question: | 
+  Do you know who the other party is? 
+yesno: other_party_option
+---
 id: other party gather 
 code: |
   other_parties[i].name
-  other_parties[i].address.address
+  other_parties_address_logic 
   other_parties[i].mobile_number
   other_parties[i].primary_language
   other_parties[i].complete = True
@@ -420,13 +490,20 @@ sets:
   - other_parties[i].name.middle
   - other_parties[i].name.suffix
 id: opposition information
+section: Opposing party
 question: |
   Information about the other side
 subquestion: | 
-  If the Commonwealth is the opposing party provide the District Attorney's information  
+  If the Commonwealth is the opposing party provide the assigned District Attorney's information  
 fields:
-  - code: |
-      other_parties[i].name_fields()
+  - First name: other_parties[i].name.first
+    required: False
+  - Middle name: other_parties[i].name.middle
+    required: False
+  - Last name: other_parties[i].name.last
+    required: False
+  - Suffix: other_parties[i].name.suffix
+    required: False
   - "Company": Opp_Company
     required: False
     hint: e.g. Alphabet, Inc., Suffolk DA 
@@ -437,7 +514,7 @@ fields:
     maxlength: 180
     required: False
   - "Date of birth": other_parties[i].birthdate
-    datatype: birthdate
+    datatype: date
     required: False
     maxlength: 11
   - "Gender expression": opp_GenderExpression
@@ -448,19 +525,40 @@ fields:
     maxlength: 270
     required: False
 ---
+id: other party logic 
+code: |
+  if op_address_unknown == True:
+    other_parties[i].address.address = 'Unknown'
+    other_parties[i].address.city = ' '
+    other_parties[i].address.state = ' ' 
+    other_parties[i].address.zip = ' '
+  other_parties_address_logic = True 
+---
 generic object: ALIndividual
 id: other party address
-sets:
-  - other_parties[i].address.address
-  - other_parties[i].address.city
-  - other_parties[i].address.zip
+section: Opposing party
 question: |
   What is ${other_parties[i].name.first}'s address?
 fields:
-  - code: |
-      other_parties[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
+  - Address unknown: op_address_unknown
+    datatype: yesno
+    disable others: True
+  - Address: other_parties[i].address.address
+    address autocomplete: True
+    required: False
+  - Unit: other_parties[i].address.unit
+    required: False
+  - City: other_parties[i].address.city
+    required: False
+  - State: other_parties[i].address.state
+    required: False
+    code: |
+      states_list()
+  - Zip: other_parties[i].address.zip
+    required: False
 ---
 id: Opposition Contact Information
+secton: Opposing party 
 question: |
   Enter  ${other_parties[0].name.first}'s contact information
 fields:  
@@ -475,6 +573,7 @@ fields:
     required: False
 ---
 id: other party language questions 
+section: Opposing party
 generic object: ALIndividual
 sets: 
   - other_parties[i].primary_language
@@ -482,7 +581,7 @@ question: |
   What is ${ other_parties[i].name.first }'s primary language(s) 
 fields: 
   - "${ other_parties[i].name.first } requires an interpreter": Opp_Interpreter
-    datatype: yesnowide
+    datatype: yesno
   - "Primary language(s)": other_parties[i].primary_language
     required: False
 ---
@@ -501,6 +600,7 @@ code: |
   contacts[i].complete = True
 ---
 id: contact relationship
+section: Contacts
 generic object: ALIndividual
 question: |
   What is ${ contacts[i].name.first}'s relationship to the case?
@@ -510,6 +610,7 @@ fields:
     hint: e.g Witness, alleged victim, parent
 ---
 id: contacts contact info
+section: Contacts
 generic object: ALIndividual
 question: | 
   What is ${ contacts[i].name.first}'s contact information 
@@ -522,8 +623,31 @@ fields:
   - "Contact email": contacts[i].email 
     maxlength: 39
     required: False
+--- 
+generic object: ALIndividual
+section: Contacts
+id: contact address 
+question: |
+  What is ${contacts[i].name.first}'s address?
+fields:
+  - Address: contacts[i].address
+    address autocomplete: True
+    required: False
+  - Unit: contacts[i].unit
+    required: False
+  - City: contacts[i].city
+    required: False
+  - State: contacts[i].state
+    required: False
+    code: |
+      states_list()
+  - Zip: contacts[i].zip
+    required: False
+  #- code: |
+      #contacts[i].address.address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE)
 ---
 id: another contact 
+section: Contacts
 question: |
   Do you have another contact to add to the case?
 subquestion: |
@@ -533,10 +657,9 @@ subquestion: |
 yesno: contacts[i].there_is_another 
 ---
 id: Conflict Information
+section: Conflict check 
 question: |
-  Conflict Information
-subquestion: | 
-  You will have an opportunity to share your conflict check results next 
+  Conflict Check
 fields:
   - "Conflict check complete": ConflictCheckComplete
     datatype: yesnowide
@@ -544,49 +667,37 @@ fields:
     show if: ConflictCheckComplete
     required: False
     datatype: yesnowide
+  - note: |
+      You will have an opportunity to upload and attach your conflict check results on the next screen 
+    show if: ConflictCheckComplete
   - "Date of conflict check": Date_ConflictCheck
     datatype: date
+    default: ${today()}
     show if: ConflictCheckComplete
   - "Description of conflict check": Description_Conflict
     show if: ConflictCheckComplete
     input type: area
     maxlength: 294
 ---
-id: preview Case_Opening_Form
-question: |
-  Preview your form before you sign it
-subquestion: |
-  Here is a preview of the form.   
-  
-  ${ al_recipient_bundle.as_pdf(key='preview') }
-
-  Click the image to open it in a new tab. Click the "Make changes" button
-  to edit your answers.
-
-  ${ action_button_html(url_action('review_Case_Opening_Form'), label='Make changes', color='info') }
-  
-  Remember to come back to this window to continue.
-continue button field: Case_Opening_Form_preview_question    
----
 code: |
   signature_fields = []
 ---
 id: download Case_Opening_Form
+section: Download
 event: Case_Opening_Form_download
 question: |
   Your form is ready to download.
 subquestion: |
-  Thank you {users}. Your form is ready to download and deliver.
+  Thank you ${users}. Your form is ready to download and/or email.
   
-  View, download and send your form below. Click the "Make changes" button to fix any mistakes.
+  Email a copy to yourself and forward to your supervisor for their sign off. 
 
-  ${ action_button_html(url_action('review_Case_Opening_Form'), label='Make changes', color='info') }
-  
+  View, download and send your form below. Click the "Make changes" button to fix any mistakes.
   
   ${ al_user_bundle.download_list_html() }
   
 
-  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=True) }
 
 progress: 100
 ---
@@ -615,7 +726,7 @@ attachments:
       - "Student_Atty_name": ${ studentattorney }
       - "ConflictCheckResultsAttached": ${ ConflictCheckResultsAttached }
       - "ConflictCheckComplete": ${ ConflictCheckComplete }
-      - "Date_ConflictCheck": ${ Date_ConflictCheck.format_date('MM/dd/YYYY')}
+      - "Date_ConflictCheck": ${ Date_ConflictCheck.format_date('MM/dd/YY')}
       - "Description_Conflict": ${ Description_Conflict }
       
       - "Case_Description": ${ Case_Description }
@@ -627,7 +738,7 @@ attachments:
       - "Case_Type": ${ Case_Type }
       - "Case__synopsis": ${ Case__synopsis }
       
-      - "client_birthdate": ${ client[0].birthdate }
+      - "client_birthdate": ${ client[0].birthdate.format_date('MM/dd/YYYY')}
       - "Client_gender": ${ Client_gender }
       - "Client_Name": ${ client[0].name }
       - "Client_Company": ${ Client_Company }
@@ -647,8 +758,6 @@ attachments:
       - "Client_Interpreter": | 
           % if Client_Interpreter == True: 
           Yes
-          % else: 
-          No
           % endif
       - "Client_Primary_Languages": ${ client[0].primary_language  }
       - "Client_Race": ${ Client_Race }
@@ -660,7 +769,7 @@ attachments:
       - "Client_Number_Household": ${ Client_Number_Household }
       - "Client_Notes": ${ Client_Notes }
       
-      - "opp_DateOfBirth": ${ other_parties[0].birthdate }
+      - "opp_DateOfBirth": ${ other_parties[0].birthdateformat_date('MM/dd/YYYY') }
       - "opp_name": ${ other_parties[0].name.full() }
       - "opp_GenderExpression": ${ opp_GenderExpression }
       - "opp_title": ${ opp_title }
@@ -675,8 +784,6 @@ attachments:
       - "Opp_Interpreter": |
           % if Opp_Interpreter == True: 
           Yes
-          % else: 
-          No
           % endif
       - "opp_PrimaryLanguages": ${ other_parties[0].primary_language }
       - "opp_email": ${ other_parties[0].email }
@@ -741,6 +848,7 @@ code: |
 ---
 generic object: ALExhibitList
 id: any exhibits
+section: Conflict check 
 question: |
   % if al_form_type in ['starts_case','existing_case','appeal']:
   Do you have any documents that you want to provide to the court?
@@ -748,7 +856,7 @@ question: |
   Do you have any documents that you want to attach to this form?
   % endif
 subquestion: | 
-  Incldue screenshots from the conflict or any additional opening forms
+  Include screenshots from the conflict or any additional opening forms
 fields:
   - Do you have any documents you want to upload?: x.has_exhibits
     datatype: yesnoradio
@@ -778,37 +886,23 @@ validation code: |
 ---
 id: basic questions intro screen
 decoration: form-lineal
+section: Instructions
 question: |
   ${interview_short_title}: ${ AL_ORGANIZATION_TITLE}
 subquestion: |
-  % if form_approved_for_email_filing:
-  The ${ AL_ORGANIZATION_TITLE } Project can help you complete and file court forms in 3 steps:
-  % else:
-  The ${ AL_ORGANIZATION_TITLE } Project can help you complete and download forms in 3 steps:
-  % endif
-  
+
+  The ${ AL_ORGANIZATION_TITLE } Project can help you complete the Clinical Programs Case Opening Form. 
+
   Step 1. Answer questions that will fill in your form for you.  
   Step 2. Preview the completed form.  
-  % if form_approved_for_email_filing:  
-  Step 3. Email the form to the court using this secure website and save copies
-  for yourself for later reference.  
-  % elif al_form_type in ['starts_case','existing_case','appeal']:
-  Step 3. Download and print the final form. You will need to deliver it
-  to the court on your own.
-  % else:
-  Step 3. Download and print the final form. You will need to deliver it 
-  on your own.
-  % endif
-  
-  This site is not a lawyer. If you would like a lawyer, find [your local
-  legal aid provider](https://www.lsc.gov/what-legal-aid/find-legal-aid).
+  Step 3. Download and print the final form.  [BR]
+  Step 4. Share the completed form to your supervisior for their approval. [BR]
+  Step 5. Once approved, forward to Joan for new matter creation. 
+  [BR]
+  Step 5. Save a copy to the client file. 
   
   Tap the {green words} in any screen for a definition or more information.
-  
-  % if chat_partners_available().help:
-  Live help is currently available in this interview. Click the speech bubble
-  (:comment-alt:) in the navigation bar to connect to a live advocate for help.
-  % endif
+
 fields:
   - To continue, you must accept our [terms of use](${ AL_ORGANIZATION_HOMEPAGE }/privacy/): acknowledged_information_use
     datatype: checkboxes
@@ -829,5 +923,7 @@ right: |
   Saved answers available!  
   
   ${action_button_html(url_action('load_answer'), icon="folder-open", label=word("View answers"), size="sm" )}
-  % endif    
+  % endif
+---
+
 
