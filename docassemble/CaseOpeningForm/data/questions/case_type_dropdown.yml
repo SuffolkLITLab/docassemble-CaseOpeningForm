@@ -34,3 +34,61 @@ data:
     - Security Deposit
     - Small Claim
     - Unknown
+  Family Advocacy Clinic: 
+    - Divorce
+    - Paternity
+    - Child Support
+    - Custody
+    - Visitation
+    - Separate Support
+    - Modification
+    - Contempt
+    - Restraining Order
+    - Guardianship
+    - Unknown
+  Health Law Clinic: 
+    - Mass Health Appeal
+    - Social Security
+    - Private Health Appeal
+    - Health Care Proxy/DPOA
+    - Adult Guardianship-non rogers
+    - Adult Guardianship-rogers
+    - Guardianship
+    - Social Security Denial
+    - Health Insurance
+    - Social Security Termination/Reduction
+    - Research/Policy Project
+    - Other
+  Immigration Clinic: 
+    - Immigration Affirmative Asylum
+  Human Rights and Indigenous Peoples Clinic: 
+    - Code Drafting
+    - IHR
+  Innocence Clinic: 
+    - Innocence 
+  Intellectual Property & Entrepreneurship Clinic:
+    - Trademark Application
+    - Trademark Oppostion
+    - Trademark Cancellation
+    - Trademark Court Action
+    - Trademark Registration
+    - Non-provisional Utility Patent App
+    - Provisional Untility Patent App
+    - Design Patent App
+    - Copyright
+    - Patentability Litigation
+    - Patentability Analysis
+    - Unknown
+  Suffolk Defenders Program: Suffolk Defenders Program
+    - New Offence 
+    - Surender 
+    - Post-Conviction/Appeal
+    - Drug Scandal 
+    - Felony 
+    - Unknown 
+  Suffolk Prosecutors Program: Suffolk Prosecutors Program
+    - Prosecution 
+  Supreme Court Clinic: 
+    -  Supreme Court Clinic
+  Transactional Clinic: 
+    - Transactional Clinic
