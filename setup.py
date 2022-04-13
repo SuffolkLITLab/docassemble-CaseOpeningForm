@@ -45,7 +45,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
 setup(name='docassemble.CaseOpeningForm',
       version='1.0',
       description=('Case Opening Form'),
-      long_description='# docassemble.CaseOpeningForm\r\n\r\nCase Opening Form\r\n\r\n## Author\r\n\r\nLIT Lab\r\n\r\n',
+      long_description='# docassemble.CaseOpeningForm\r\n\r\nCase Opening Form\r\n\r\n## Author\r\n\r\nAubrie Souza\r\n\r\nMatt Patalano \r\n\r\n## Information \r\n\r\nInstalled on the test server https://apps-test.suffolklitlab.org/run/ClinicCaseOpening/#/1\r\n\r\n\r\n',
       long_description_content_type='text/markdown',
       author='LIT Lab',
       author_email='cl.mpatalano@suffolk.edu',

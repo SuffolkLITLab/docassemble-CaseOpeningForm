@@ -6,11 +6,15 @@ include:
 ---
 metadata:
   title: |
-    Case Opening Form
+    Clinic Case Opening Form
   short title: |
-    Case Opening Form
+    Clinic Case Opening Form
   authors:
     - LIT Lab
+  exit link: |
+    https://suffolklitlab.org/incourt/
+  title url: | 
+    https://suffolklitlab.org/incourt/
 ---
 sections:
   - Instructions 
