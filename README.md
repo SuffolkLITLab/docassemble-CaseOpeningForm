@@ -10,6 +10,10 @@ Matt Patalano
 
 ## Information 
 
-Installed on the test server https://apps-test.suffolklitlab.org/run/ClinicCaseOpening/#/1
+Production: https://apps.suffolklitlab.org/run/ClinicCaseOpening/#/1
+
+Test:  https://apps-test.suffolklitlab.org/run/ClinicCaseOpening/#/1
+
+
 
 
