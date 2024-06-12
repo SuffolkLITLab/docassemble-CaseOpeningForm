@@ -9,12 +9,15 @@ metadata:
     Clinic Case Opening Form
   short title: |
     Clinic Case Opening Form
+  description: |
+    This form is used to open a case in the Clinical Programs at Suffolk University Law School.
   authors:
     - LIT Lab
   exit link: |
     https://suffolklitlab.org/incourt/
   title url: | 
     https://suffolklitlab.org/incourt/
+  unlisted: True
 ---
 sections:
   - Instructions 
