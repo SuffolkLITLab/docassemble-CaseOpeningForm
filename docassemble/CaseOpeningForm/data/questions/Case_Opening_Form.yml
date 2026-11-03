@@ -163,7 +163,9 @@ code: |
 id: police report 
 question: | 
   Do you have a police report? 
-yesno: police_report
+fields:
+  - no label: police_report
+    datatype: yesnoradio
 ---
 id: fill in choice 
 question: | 
@@ -493,7 +495,9 @@ id: have other party?
 section: Other pary 
 question: | 
   Do you know who the other party is? 
-yesno: other_party_option
+fields:
+  - no label: other_party_option
+    datatype: yesnoradio
 ---
 id: other party gather 
 code: |
@@ -607,7 +611,9 @@ fields:
 id: any contacts
 question: |
   Do you have any contacts to add? 
-yesno: contact.there_are_any
+fields:
+  - no label: contact.there_are_any
+    datatype: yesnoradio
 ---
 id: contacts gather
 code: |
@@ -673,7 +679,9 @@ subquestion: |
   % if len(contacts.elements) > 0:  
   So far you have told us about ${comma_and_list(contacts.complete_elements())}.
   % endif
-yesno: contacts[i].there_is_another 
+fields:
+  - no label: "contacts[i].there_is_another"
+    datatype: yesnoradio
 ---
 id: Conflict Information
 section: Conflict check 
