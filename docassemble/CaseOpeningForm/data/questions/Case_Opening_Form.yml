@@ -290,7 +290,7 @@ fields:
     maxlength: 96
     required: False
     hint: e.g., Full, Bail only, etc.
-continue button: additional_case_info
+continue button field: additional_case_info
 ---
 id: optional case information 
 question: | 
@@ -581,7 +581,7 @@ fields:
     required: False
 ---
 id: Opposition Contact Information
-secton: Opposing party 
+section: Opposing party
 question: |
   Enter  ${other_parties[0].name.first}'s contact information
 fields:  
